@@ -240,9 +240,9 @@ export function createSeed(): YangongState {
       },
     ],
     attempts: [
-      { id: ATT_A, taskId: VOICE_TASK, slotId: "s-v-1", personId: ALICE_ID, submissionId: "sub-a", status: "submitted", startedAt: "2026-09-02T10:00:00+08:00" },
-      { id: ATT_B, taskId: VOICE_TASK, slotId: "s-v-2", personId: BOB_ID, submissionId: "sub-b", status: "submitted", startedAt: "2026-09-02T11:20:00+08:00" },
-      { id: ATT_C, taskId: VOICE_TASK, slotId: "s-v-3", personId: CAROL_ID, submissionId: "sub-c", status: "submitted", startedAt: "2026-09-02T16:05:00+08:00" },
+      { id: ATT_A, taskId: VOICE_TASK, slotId: "s-v-1", personId: ALICE_ID, submissionId: "sub-a", status: "failed", startedAt: "2026-09-02T10:00:00+08:00" },
+      { id: ATT_B, taskId: VOICE_TASK, slotId: "s-v-2", personId: BOB_ID, submissionId: "sub-b", status: "passed", startedAt: "2026-09-02T11:20:00+08:00" },
+      { id: ATT_C, taskId: VOICE_TASK, slotId: "s-v-3", personId: CAROL_ID, submissionId: "sub-c", status: "failed", startedAt: "2026-09-02T16:05:00+08:00" },
       { id: ATT_DENIS, taskId: REVIEW_TASK, slotId: "s-r-1", personId: "p-denis", submissionId: "sub-denis", status: "submitted", startedAt: "2026-09-05T09:00:00+08:00" },
     ],
     submissions: [
@@ -295,7 +295,7 @@ export function createSeed(): YangongState {
         submittedAt: "2026-09-11T18:00:00+08:00",
       },
     ],
-    evaluations: [],
+    evaluations: voiceEvaluations(),
     suites: [
       { id: "suite-reliability", key: "common/reliability-v2", name: "通用可靠性", category: "通用质量", version: "v2.0", summary: "启动、异常退出、超时、重试、资源泄漏。", caseCount: 5 },
       { id: "suite-streaming", key: "ai/streaming-v3", name: "流式模型", category: "AI Model", version: "v3.0", summary: "Streaming、Token Limit、Tool Calling、Provider Failure。", caseCount: 4 },
@@ -406,9 +406,9 @@ export function createSeed(): YangongState {
         summary: "实施任务的环境是现场，不是容器。仍然要版本化。",
       },
     ],
-    runs: [],
-    caseResults: [],
-    verifications: [],
+    runs: voiceRuns(),
+    caseResults: voiceCaseResults(),
+    verifications: voiceVerifications(),
     awards: [],
     settlements: [],
     disputes: [],
@@ -455,6 +455,8 @@ export function createSeed(): YangongState {
       { id: "j1", taskId: VOICE_TASK, at: "2026-09-01T09:00:00+08:00", kind: "publish", text: "合同发布。模式 contest · 3 席 · 需审批。环境 voice-runtime-v3.2。" },
       { id: "j2", taskId: VOICE_TASK, at: "2026-09-02T16:05:00+08:00", kind: "slots", text: "三席已满：Alice / Bob / Carol。Task = active。" },
       { id: "j3", taskId: VOICE_TASK, at: "2026-09-10T08:05:00+08:00", kind: "submit", text: "三份 Attempt 均 submitted。Task 进入 judging。各候选人进度不再写回 Task。" },
+      { id: "j3e", taskId: VOICE_TASK, at: "2026-09-10T12:00:00+08:00", kind: "evaluate", text: "相对评审完成。名次写在 Evaluation 上。Alice 第 1。" },
+      { id: "j3s", taskId: VOICE_TASK, at: "2026-09-10T15:00:00+08:00", kind: "sandbox", text: "同一 SandboxSpec 跑完。Alice / Carol 绝对失败。Bob 通过。名次不变。" },
       { id: "j4", taskId: REVIEW_TASK, at: "2026-09-11T18:00:00+08:00", kind: "submit", text: "Denis 提交评审备忘 URL。Task 仍是 active。量表还没跑。" },
     ],
   };
@@ -581,3 +583,96 @@ export const REVIEW_EVAL_SCRIPT: Record<
     ],
   },
 };
+
+function voiceEvaluations() {
+  const map = [
+    { attemptId: ATT_A, submissionId: "sub-a", rank: 1 },
+    { attemptId: ATT_B, submissionId: "sub-b", rank: 2 },
+    { attemptId: ATT_C, submissionId: "sub-c", rank: 3 },
+  ] as const;
+  return map.map((row) => {
+    const script = VOICE_EVAL_SCRIPT[row.submissionId];
+    return {
+      id: `ev-${row.submissionId}`,
+      taskId: VOICE_TASK,
+      attemptId: row.attemptId,
+      submissionId: row.submissionId,
+      score: script.score,
+      rank: row.rank,
+      method: "expert" as const,
+      summary: script.summary,
+      dimensions: script.dimensions,
+    };
+  });
+}
+
+function voiceRuns() {
+  return (["sub-a", "sub-b", "sub-c"] as const).map((subId) => {
+    const script = VOICE_RUN_SCRIPT[subId];
+    const attemptId = subId === "sub-a" ? ATT_A : subId === "sub-b" ? ATT_B : ATT_C;
+    return {
+      id: `run-${subId}`,
+      taskId: VOICE_TASK,
+      attemptId,
+      submissionId: subId,
+      specId: SPEC_VOICE,
+      suiteIds: ["suite-reliability", "suite-streaming", "suite-voice"],
+      image: "voice-runtime:v3.2",
+      status: "completed" as const,
+      passed: script.passed,
+      total: script.total,
+      p50Ms: script.p50Ms,
+      p95Ms: script.p95Ms,
+      interruptPct: script.interruptPct,
+      memoryMb: script.memoryMb,
+      failedCaseIds: [...script.failedCaseIds],
+      artifacts: ["logs", "audio", "trace", "metrics"],
+      startedAt: "2026-09-10T14:00:00+08:00",
+      finishedAt: "2026-09-10T15:00:00+08:00",
+    };
+  });
+}
+
+function voiceCaseResults() {
+  const att = { "sub-a": ATT_A, "sub-b": ATT_B, "sub-c": ATT_C } as const;
+  return Object.entries(VOICE_CASE_SCRIPT).flatMap(([subId, rows]) =>
+    rows.map((row, i) => ({
+      ...row,
+      id: `cr-${subId}-${i + 1}`,
+      runId: `run-${subId}`,
+      attemptId: att[subId as keyof typeof att],
+    })),
+  );
+}
+
+function voiceVerifications() {
+  return [
+    {
+      id: "vf-sub-a",
+      taskId: VOICE_TASK,
+      attemptId: ATT_A,
+      submissionId: "sub-a",
+      runId: "run-sub-a",
+      outcome: "fail" as const,
+      reason: "未通过绝对验收：TC-VOICE-004 / TC-VOICE-017",
+    },
+    {
+      id: "vf-sub-b",
+      taskId: VOICE_TASK,
+      attemptId: ATT_B,
+      submissionId: "sub-b",
+      runId: "run-sub-b",
+      outcome: "pass" as const,
+      reason: "绝对验收通过。环境 voice-runtime-v3.2。相对第 2 名。",
+    },
+    {
+      id: "vf-sub-c",
+      taskId: VOICE_TASK,
+      attemptId: ATT_C,
+      submissionId: "sub-c",
+      runId: "run-sub-c",
+      outcome: "fail" as const,
+      reason: "未通过绝对验收：TC-VOICE-004",
+    },
+  ];
+}

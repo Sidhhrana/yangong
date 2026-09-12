@@ -57,7 +57,7 @@ Winner ≠ Paid
 拟中标失败 → 下一合格 Attempt 递补
 ```
 
-Evaluation 回答「谁更好」。Verification 回答「合不合格」。二者必须分开。名次从分数推导，不是数组下标。第 1 名也可以绝对失败。
+Evaluation 回答「谁更好」。Verification 回答「合不合格」。二者必须分开。名次从分数推导，不是数组下标。第 1 名也可以绝对失败。运行时不按 submission id 查演示脚本。
 
 SandboxRun 不能只给 47/50。必须能回答：TC-VOICE-017 期望什么、实际什么、日志在哪。这是 TestCaseResult。
 

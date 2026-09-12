@@ -63,6 +63,14 @@
 - [x] 无人绝对合格则否决任务
 - [x] 事故进验证库 `market/evaluation-v1`
 
+## V0.7 · 运行时不再查演示脚本
+
+- [x] Evaluation 由专家记下维度分数，再锁定名次
+- [x] Verification 由已记录的 TestCaseResult 提交；没有记录就没有结果
+- [x] 语音三席是 seed 里的历史记录，不是点击后按 sub-a 查表
+- [x] 回归从真实失败沉淀，不再写死 TC-VOICE-042
+- [ ] SandboxRunner 仍是 #3
+
 ## 以后维护者只做的事
 
 写 Issue。验收 PR。保护两台状态机。把事故写进验证库。

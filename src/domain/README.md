@@ -13,7 +13,8 @@ GitHub 和支付宝在 `src/connectors/`。改连接器不要改 `machine.ts`。
 - `stability.ts` 稳定期证据才能 accepted
 - `slot.ts` approval_required → applied
 - `claim.ts` 口令认领；钱包不是认领
-- `evaluate.ts` 相对排名。第 1 名也可以绝对失败
+- `evaluate.ts` 相对排名。第 1 名也可以绝对失败。分数从维度来。
+- `verify.ts` 验收必须有记录。没有记录就没有结果。
 - `copy.ts` 中文标签
 
 改状态机必须同时改 `docs/state-machine.md`。

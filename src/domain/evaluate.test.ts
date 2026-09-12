@@ -4,8 +4,10 @@ import {
   SCORE_FLOOR,
   assignRanks,
   canNominateProvisional,
+  dimensionsFor,
   nextProvisionalId,
   qualifyByScore,
+  scoreFromDimensions,
 } from "./evaluate.ts";
 
 const alice = { id: "att-a", score: 91, submittedAt: "2026-09-09T21:10:00+08:00" };
@@ -77,4 +79,17 @@ test("已有拟中标在测时不能另提名", () => {
     { id: "att-b", status: "qualified" as const },
   ];
   assert.equal(nextProvisionalId(evals, atts), undefined);
+});
+
+test("总分从维度算，不查 submission id", () => {
+  assert.equal(
+    scoreFromDimensions([
+      { score: 94 },
+      { score: 93 },
+      { score: 78 },
+      { score: 90 },
+    ]),
+    89,
+  );
+  assert.deepEqual(dimensionsFor("review"), ["引用", "覆盖", "矛盾", "来源"]);
 });

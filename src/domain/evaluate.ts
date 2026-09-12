@@ -1,4 +1,4 @@
-import type { Attempt, AttemptStatus, Evaluation } from "./types.ts";
+import type { Attempt, AttemptStatus, Evaluation, TaskType } from "./types.ts";
 
 /** 低于此分取消资格。相对好看不够，门槛都没过。 */
 export const SCORE_FLOOR = 60;
@@ -48,4 +48,20 @@ export function canNominateProvisional(
   attempts: Pick<Attempt, "id" | "status">[],
 ): boolean {
   return nextProvisionalId(evaluations, attempts) === attemptId;
+}
+
+export function scoreFromDimensions(dimensions: { score: number }[]): number {
+  if (dimensions.length === 0) return 0;
+  const sum = dimensions.reduce((n, d) => n + d.score, 0);
+  return Math.round(sum / dimensions.length);
+}
+
+export function dimensionsFor(type: TaskType): string[] {
+  if (type === "review" || type === "article" || type === "research") {
+    return ["引用", "覆盖", "矛盾", "来源"];
+  }
+  if (type === "deployment") return ["可访问", "健康", "备份", "回滚"];
+  if (type === "design") return ["焦点", "对比度", "状态表"];
+  if (type === "video") return ["路径", "口播", "时长"];
+  return ["架构", "正确性", "延迟", "可维护"];
 }
