@@ -1,0 +1,28 @@
+name: Good first issue
+description: 给新贡献者（人或 AI coder）的小合同。
+title: "[good first issue] "
+labels: ["good first issue", "help wanted"]
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Likely files
+      placeholder: src/data/seed.ts

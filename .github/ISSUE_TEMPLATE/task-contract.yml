@@ -1,0 +1,49 @@
+name: Task Contract
+description: 提一个可验收的贡献合同。维护者用这个；参与者按合同提 PR。
+title: "[Task] "
+labels: ["contract"]
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: 我要什么。一句话。
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      description: 交什么。文件、接口、用例、文档。
+      placeholder: "- src/domain/...\n- docs/..."
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: 不能动什么。
+      placeholder: "- 不要改支付\n- 不要绕开状态机"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: 怎么证明做到了。必须可判定。
+    validations:
+      required: true
+  - type: input
+    id: suites
+    attributes:
+      label: Test suites to touch
+      placeholder: "voice/realtime-interruption-v1"
+  - type: dropdown
+    id: slots
+    attributes:
+      label: Slots
+      options:
+        - exclusive (1)
+        - contest (3)
+        - cooperative
+      default: 0

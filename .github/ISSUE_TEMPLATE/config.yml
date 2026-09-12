@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 先读架构
+    url: https://github.com/lilei0311/yangong/blob/main/docs/architecture.md
+    about: 动状态机之前先把合同写清楚。
