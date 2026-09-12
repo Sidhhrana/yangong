@@ -1,4 +1,5 @@
 import type {
+  AttemptStatus,
   CaseKind,
   ParticipationMode,
   SubmissionKind,
@@ -9,16 +10,11 @@ import type {
 export const STATUS_LABEL: Record<TaskStatus, string> = {
   draft: "草稿",
   open: "公示",
-  claiming: "申领席位",
-  in_progress: "进行中",
-  submitted: "已提交",
-  evaluating: "评审中",
-  provisional_accepted: "拟中标",
-  verifying: "验证中",
-  stability_period: "稳定期",
+  active: "进行中",
+  judging: "裁决中",
   accepted: "已验收",
-  payment_pending: "待支付",
-  paid: "已结算",
+  settling: "待支付",
+  closed: "已结算",
   rejected: "未通过",
   cancelled: "已取消",
   disputed: "争议中",
@@ -27,21 +23,32 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
 
 export const STATUS_HINT: Record<TaskStatus, string> = {
   draft: "合同尚未发布",
-  open: "等待参赛者申领",
-  claiming: "席位正在被申领",
-  in_progress: "席位已满，正在交付",
-  submitted: "成果已齐，等待评审",
-  evaluating: "比较谁更好，尚未判定合不合格",
-  provisional_accepted: "相对最优，进入绝对验收",
-  verifying: "沙箱正在客观执行证明",
-  stability_period: "Winner ≠ Paid，观察回归",
-  accepted: "相对排名好，且绝对验收合格",
-  payment_pending: "Award 已出，Settlement 未完成",
-  paid: "钱已经付出去",
+  open: "等待参赛者申领席位",
+  active: "有人在做。各候选人的 Attempt 可以处于不同状态。",
+  judging: "相对评审与绝对验证进行中。Task 不再表示某一个人到哪一步。",
+  accepted: "相对排名好，且绝对验收合格。Winner ≠ Paid。",
+  settling: "Award 已出，Settlement 未完成",
+  closed: "钱已经付出去",
   rejected: "无合格候选人，或全部淘汰",
   cancelled: "发布方撤回",
   disputed: "进入争议期",
   expired: "超过截止时间",
+};
+
+export const ATTEMPT_LABEL: Record<AttemptStatus, string> = {
+  claimed: "已占席",
+  working: "交付中",
+  submitted: "已提交",
+  evaluating: "相对评审",
+  qualified: "相对合格",
+  disqualified: "相对淘汰",
+  provisional: "拟中标",
+  verifying: "沙箱验证",
+  passed: "绝对合格",
+  failed: "验证失败",
+  stability: "稳定期",
+  accepted: "已中标",
+  withdrawn: "已退出",
 };
 
 export const TYPE_LABEL: Record<TaskType, string> = {
@@ -87,14 +94,20 @@ export const CASE_KIND_LABEL: Record<CaseKind, string> = {
 export const MAINLINE = [
   "draft",
   "open",
-  "claiming",
-  "in_progress",
+  "active",
+  "judging",
+  "accepted",
+  "settling",
+  "closed",
+] as const;
+
+export const ATTEMPT_MAINLINE = [
   "submitted",
   "evaluating",
-  "provisional_accepted",
+  "qualified",
+  "provisional",
   "verifying",
-  "stability_period",
+  "passed",
+  "stability",
   "accepted",
-  "payment_pending",
-  "paid",
 ] as const;

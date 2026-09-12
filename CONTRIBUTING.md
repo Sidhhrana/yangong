@@ -20,8 +20,8 @@
 
 可以改：
 
-- `src/domain/*` 类型、状态机、文案
-- `src/data/seed.ts` 里的验证库与演示数据
+- `src/domain/*` 类型、两台状态机、文案
+- `src/data/seed.ts` 里的验证库、SandboxSpec 与演示数据
 - 验证库新用例
 - 文档
 - 控制台里对已有对象的呈现
@@ -31,9 +31,10 @@
 - 换框架
 - 接真实支付
 - 接真实 K8s / Docker 沙箱
-- 把状态机绕开，直接写 `status = "paid"`
+- 把 Task 状态机绕开，直接写 `status = "closed"`
+- 把 Attempt 进度写回 Task（例如让 Task 变成 `verifying`）
 
-改状态机必须同时改 `src/domain/machine.ts` 和 `docs/state-machine.md`。
+改状态机必须同时改 `src/domain/machine.ts` 和 `docs/state-machine.md`。Task 和 Attempt 是两台机器。
 
 ## Issue 就是合同
 
@@ -44,6 +45,8 @@
 - constraints
 - acceptance
 - 引用的 test suite（如果有）
+- Verification Environment（SandboxSpec key，如果有）
+- Reward（奖池 / 规则）
 
 PR 描述必须逐条回应 acceptance。没写清验收的 Issue，可以评论要求维护者补合同，不要猜测。
 
@@ -57,4 +60,4 @@ PR 描述必须逐条回应 acceptance。没写清验收的 Issue，可以评论
 
 ## 本地
 
-本仓库的可运行控制台目前作为托管预览存在。贡献领域模型与文档不需要跑完整前端。若你要改 UI，沿用现有 TanStack Start + Tailwind 约定，并保持移动端可用。
+本仓库是 Protocol / Domain Spec。可运行控制台作为托管预览存在，不在本仓库根目录提供 `package.json`。贡献领域模型与文档不需要跑完整前端。若你要改 UI，沿用现有 TanStack Start + Tailwind 约定，并保持移动端可用。

@@ -1,16 +1,11 @@
 export const TASK_STATUSES = [
   "draft",
   "open",
-  "claiming",
-  "in_progress",
-  "submitted",
-  "evaluating",
-  "provisional_accepted",
-  "verifying",
-  "stability_period",
+  "active",
+  "judging",
   "accepted",
-  "payment_pending",
-  "paid",
+  "settling",
+  "closed",
   "rejected",
   "cancelled",
   "disputed",
@@ -22,16 +17,11 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export const MAINLINE_STATUSES: TaskStatus[] = [
   "draft",
   "open",
-  "claiming",
-  "in_progress",
-  "submitted",
-  "evaluating",
-  "provisional_accepted",
-  "verifying",
-  "stability_period",
+  "active",
+  "judging",
   "accepted",
-  "payment_pending",
-  "paid",
+  "settling",
+  "closed",
 ];
 
 export const SIDE_STATUSES: TaskStatus[] = [
@@ -40,6 +30,24 @@ export const SIDE_STATUSES: TaskStatus[] = [
   "disputed",
   "expired",
 ];
+
+export const ATTEMPT_STATUSES = [
+  "claimed",
+  "working",
+  "submitted",
+  "evaluating",
+  "qualified",
+  "disqualified",
+  "provisional",
+  "verifying",
+  "passed",
+  "failed",
+  "stability",
+  "accepted",
+  "withdrawn",
+] as const;
+
+export type AttemptStatus = (typeof ATTEMPT_STATUSES)[number];
 
 export type ParticipationMode = "exclusive" | "contest" | "cooperative";
 export type TaskType =
@@ -122,7 +130,8 @@ export interface Task {
   deadline: string;
   status: TaskStatus;
   createdAt: string;
-  provisionalSubmissionId?: string;
+  /** Pointer only. 拟中标是 Attempt 的事，不把候选人进度写回 Task。 */
+  provisionalAttemptId?: string;
 }
 
 export interface TaskContract {
@@ -133,6 +142,7 @@ export interface TaskContract {
   constraints: string[];
   acceptance: string[];
   suiteIds: string[];
+  sandboxSpecId: string;
   verification: {
     type: "sandbox_test" | "expert_review" | "runtime_stability" | "rubric";
     stabilityPeriod: string;
@@ -149,10 +159,22 @@ export interface Slot {
   appliedAt?: string;
 }
 
+/** One work cycle on a Slot. Contest 三人可以同时处于不同 Attempt 状态。 */
+export interface Attempt {
+  id: string;
+  taskId: string;
+  slotId: string;
+  personId: string;
+  submissionId?: string;
+  status: AttemptStatus;
+  startedAt: string;
+}
+
 export interface Submission {
   id: string;
   taskId: string;
   slotId: string;
+  attemptId: string;
   personId: string;
   kind: SubmissionKind;
   title: string;
@@ -164,6 +186,7 @@ export interface Submission {
 export interface Evaluation {
   id: string;
   taskId: string;
+  attemptId: string;
   submissionId: string;
   score: number;
   rank: number;
@@ -194,10 +217,31 @@ export interface TestSuite {
   caseCount: number;
 }
 
+/** Versioned environment. 测试内容 ≠ 测试环境。 */
+export interface SandboxSpec {
+  id: string;
+  key: string;
+  name: string;
+  version: string;
+  image: string;
+  cpu: number;
+  memoryGb: number;
+  network: "restricted" | "allowlist" | "airgap" | "open";
+  timeout: string;
+  runtime?: Record<string, string>;
+  services: string[];
+  /** Names only. Never values. */
+  secretNames: string[];
+  fixtures: string[];
+  summary: string;
+}
+
 export interface SandboxRun {
   id: string;
   taskId: string;
+  attemptId: string;
   submissionId: string;
+  specId: string;
   suiteIds: string[];
   image: string;
   status: "queued" | "running" | "completed";
@@ -213,9 +257,23 @@ export interface SandboxRun {
   finishedAt?: string;
 }
 
+export interface TestCaseResult {
+  id: string;
+  runId: string;
+  caseId: string;
+  attemptId: string;
+  outcome: "pass" | "fail" | "skip";
+  expected: string;
+  actual: string;
+  durationMs: number;
+  failureReason?: string;
+  artifacts: string[];
+}
+
 export interface Verification {
   id: string;
   taskId: string;
+  attemptId: string;
   submissionId: string;
   runId?: string;
   outcome: VerificationOutcome;
@@ -226,6 +284,7 @@ export interface Award {
   id: string;
   taskId: string;
   personId: string;
+  attemptId: string;
   base: number;
   qualityBonus: number;
   upstreamBonus: number;
@@ -257,11 +316,14 @@ export interface YangongState {
   tasks: Task[];
   contracts: TaskContract[];
   slots: Slot[];
+  attempts: Attempt[];
   submissions: Submission[];
   evaluations: Evaluation[];
   suites: TestSuite[];
   cases: TestCase[];
+  specs: SandboxSpec[];
   runs: SandboxRun[];
+  caseResults: TestCaseResult[];
   verifications: Verification[];
   awards: Award[];
   settlements: Settlement[];

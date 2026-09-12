@@ -23,7 +23,7 @@ body:
     attributes:
       label: Constraints
       description: 不能动什么。
-      placeholder: "- 不要改支付\n- 不要绕开状态机"
+      placeholder: "- 不要改支付\n- 不要把 Attempt 状态写回 Task"
     validations:
       required: true
   - type: textarea
@@ -37,7 +37,20 @@ body:
     id: suites
     attributes:
       label: Test suites to touch
+      description: Verification Library。怎么证明。
       placeholder: "voice/realtime-interruption-v1"
+  - type: input
+    id: sandbox
+    attributes:
+      label: Verification Environment
+      description: SandboxSpec key。三个人必须在同一环境下测。
+      placeholder: "voice-runtime-v3.2"
+  - type: input
+    id: reward
+    attributes:
+      label: Reward
+      description: 奖池与规则。Winner ≠ Paid。
+      placeholder: "¥0 OSS contract · or ¥3000 contest winner"
   - type: dropdown
     id: slots
     attributes:

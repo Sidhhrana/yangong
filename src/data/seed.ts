@@ -1,0 +1,437 @@
+import type { TestCaseResult, YangongState } from "@/domain/types";
+
+export const OWNER_ID = "p-max";
+export const ALICE_ID = "p-alice";
+export const BOB_ID = "p-bob";
+export const CAROL_ID = "p-carol";
+
+export const VOICE_TASK = "t-voice";
+export const REVIEW_TASK = "t-review";
+export const DEPLOY_TASK = "t-deploy";
+export const BUGS_TASK = "t-bugs";
+
+export const SPEC_VOICE = "spec-voice";
+export const SPEC_REVIEW = "spec-review";
+export const SPEC_FIELD = "spec-field";
+
+export const ATT_A = "att-a";
+export const ATT_B = "att-b";
+export const ATT_C = "att-c";
+export const ATT_DENIS = "att-denis";
+
+export function createSeed(): YangongState {
+  return {
+    session: { actorId: OWNER_ID, role: "owner" },
+    people: [
+      { id: OWNER_ID, handle: "max", name: "Max", title: "Owner · MaxStorm", kind: "human" },
+      { id: ALICE_ID, handle: "alice", name: "Alice", title: "语音交互", kind: "human" },
+      { id: BOB_ID, handle: "bob", name: "Bob", title: "低延迟路径", kind: "human" },
+      { id: CAROL_ID, handle: "carol", name: "Carol", title: "测试完备", kind: "agent" },
+      { id: "p-denis", handle: "denis", name: "Denis", title: "架构评审", kind: "human" },
+      { id: "p-erin", handle: "erin", name: "Erin", title: "现场实施", kind: "human" },
+    ],
+    orgs: [
+      {
+        id: "org-maxstorm",
+        name: "MaxStorm",
+        slug: "maxstorm",
+        blurb: "人承担外部责任，Agent 在授权边界内持续执行。",
+      },
+    ],
+    projects: [
+      { id: "proj-openclaw", orgId: "org-maxstorm", name: "OpenClaw", slug: "openclaw" },
+      { id: "proj-aedes", orgId: "org-maxstorm", name: "Aedes Twin", slug: "aedes-twin" },
+      { id: "proj-field", orgId: "org-maxstorm", name: "现场交付", slug: "field" },
+    ],
+    tasks: [
+      {
+        id: VOICE_TASK,
+        projectId: "proj-openclaw",
+        title: "为 OpenClaw 增加实时语音能力",
+        summary:
+          "竞赛三席。三人可以同时处于不同 Attempt 状态。相对排名好不等于合格。",
+        taskType: "code",
+        sourceType: "github_issue",
+        sourceUrl: "https://github.com/lilei0311/yangong/issues/1",
+        rewardPool: 3000,
+        currency: "CNY",
+        participationMode: "contest",
+        maxSlots: 3,
+        access: "approval_required",
+        deadline: "2026-09-20T16:00:00+08:00",
+        status: "judging",
+        createdAt: "2026-09-01T09:00:00+08:00",
+      },
+      {
+        id: REVIEW_TASK,
+        projectId: "proj-aedes",
+        title: "评审 Aedes Twin 运动控制架构",
+        summary: "非代码任务。验证走量表：事实引用、覆盖率、矛盾检测、来源有效性。",
+        taskType: "review",
+        sourceType: "manual",
+        rewardPool: 1800,
+        currency: "CNY",
+        participationMode: "contest",
+        maxSlots: 3,
+        access: "approval_required",
+        deadline: "2026-09-18T18:00:00+08:00",
+        status: "active",
+        createdAt: "2026-09-04T11:00:00+08:00",
+      },
+      {
+        id: DEPLOY_TASK,
+        projectId: "proj-field",
+        title: "到客户现场部署门禁联动",
+        summary: "实施类任务。验收看服务可访问、健康检查、备份与回滚，而不是看 PR。",
+        taskType: "deployment",
+        sourceType: "manual",
+        rewardPool: 5200,
+        currency: "CNY",
+        participationMode: "exclusive",
+        maxSlots: 1,
+        access: "approval_required",
+        deadline: "2026-09-25T12:00:00+08:00",
+        status: "open",
+        createdAt: "2026-09-08T08:30:00+08:00",
+      },
+      {
+        id: BUGS_TASK,
+        projectId: "proj-openclaw",
+        title: "OpenClaw 语音回归猎虫",
+        summary: "协作模式。谁提交有效回归谁拿 ¥100，席位不互斥。",
+        taskType: "code",
+        sourceType: "incident",
+        rewardPool: 1000,
+        currency: "CNY",
+        participationMode: "cooperative",
+        maxSlots: 10,
+        access: "permissionless",
+        deadline: "2026-09-30T23:59:00+08:00",
+        status: "open",
+        createdAt: "2026-09-10T10:00:00+08:00",
+      },
+    ],
+    contracts: [
+      {
+        taskId: VOICE_TASK,
+        objective: "为 OpenClaw 实现实时语音交互",
+        inputs: ["upstream_repo", "architecture_docs", "voice-runtime-v3.2"],
+        deliverables: ["source_code", "test_report", "documentation"],
+        constraints: ["must_be_plugin", "cannot_modify_core"],
+        acceptance: [
+          "streaming_asr",
+          "barge_in",
+          "streaming_tts",
+          "regression_tests_pass",
+          "p95_latency_lt_800ms",
+        ],
+        suiteIds: ["suite-reliability", "suite-streaming", "suite-voice"],
+        sandboxSpecId: SPEC_VOICE,
+        verification: { type: "sandbox_test", stabilityPeriod: "7d" },
+        reward: { pool: 3000, currency: "CNY" },
+      },
+      {
+        taskId: REVIEW_TASK,
+        objective: "独立评审 Aedes Twin 运动控制架构，给出可执行的风险与改进",
+        inputs: ["architecture_docs", "control_loop_notes", "prior_incidents"],
+        deliverables: ["review_memo", "risk_register", "cited_sources"],
+        constraints: ["must_cite_primary_sources", "no_vendor_pitch"],
+        acceptance: [
+          "citation_coverage_gte_80",
+          "contradiction_scan_clean",
+          "sources_resolvable",
+        ],
+        suiteIds: ["suite-review"],
+        sandboxSpecId: SPEC_REVIEW,
+        verification: { type: "rubric", stabilityPeriod: "48h" },
+        reward: { pool: 1800, currency: "CNY" },
+      },
+      {
+        taskId: DEPLOY_TASK,
+        objective: "在客户现场完成门禁联动上线，并留下可回滚证据",
+        inputs: ["site_runbook", "network_diagram", "credential_vault"],
+        deliverables: ["deployment_record", "health_snapshot", "rollback_drill"],
+        constraints: ["no_production_write_without_owner", "airgap_compatible"],
+        acceptance: [
+          "service_reachable",
+          "healthcheck_green",
+          "backup_verified",
+          "rollback_drill_pass",
+        ],
+        suiteIds: ["suite-deploy"],
+        sandboxSpecId: SPEC_FIELD,
+        verification: { type: "runtime_stability", stabilityPeriod: "72h" },
+        reward: { pool: 5200, currency: "CNY" },
+      },
+      {
+        taskId: BUGS_TASK,
+        objective: "发现并沉淀 OpenClaw 语音路径上的有效回归",
+        inputs: ["voice-realtime-v4.1", "incident_log"],
+        deliverables: ["repro", "regression_case", "fix_optional"],
+        constraints: ["case_must_be_deterministic"],
+        acceptance: ["repro_confirmed", "case_merged_to_library"],
+        suiteIds: ["suite-voice"],
+        sandboxSpecId: SPEC_VOICE,
+        verification: { type: "sandbox_test", stabilityPeriod: "24h" },
+        reward: { pool: 1000, currency: "CNY" },
+      },
+    ],
+    slots: [
+      { id: "s-v-1", taskId: VOICE_TASK, index: 1, personId: ALICE_ID, status: "filled", appliedAt: "2026-09-02T10:00:00+08:00" },
+      { id: "s-v-2", taskId: VOICE_TASK, index: 2, personId: BOB_ID, status: "filled", appliedAt: "2026-09-02T11:20:00+08:00" },
+      { id: "s-v-3", taskId: VOICE_TASK, index: 3, personId: CAROL_ID, status: "filled", appliedAt: "2026-09-02T16:05:00+08:00" },
+      { id: "s-r-1", taskId: REVIEW_TASK, index: 1, personId: "p-denis", status: "filled", appliedAt: "2026-09-05T09:00:00+08:00" },
+      { id: "s-r-2", taskId: REVIEW_TASK, index: 2, status: "open" },
+      { id: "s-r-3", taskId: REVIEW_TASK, index: 3, status: "open" },
+      { id: "s-d-1", taskId: DEPLOY_TASK, index: 1, status: "open" },
+      ...Array.from({ length: 10 }, (_, i) => ({
+        id: `s-b-${i + 1}`,
+        taskId: BUGS_TASK,
+        index: i + 1,
+        status: "open" as const,
+      })),
+    ],
+    attempts: [
+      { id: ATT_A, taskId: VOICE_TASK, slotId: "s-v-1", personId: ALICE_ID, submissionId: "sub-a", status: "submitted", startedAt: "2026-09-02T10:00:00+08:00" },
+      { id: ATT_B, taskId: VOICE_TASK, slotId: "s-v-2", personId: BOB_ID, submissionId: "sub-b", status: "submitted", startedAt: "2026-09-02T11:20:00+08:00" },
+      { id: ATT_C, taskId: VOICE_TASK, slotId: "s-v-3", personId: CAROL_ID, submissionId: "sub-c", status: "submitted", startedAt: "2026-09-02T16:05:00+08:00" },
+      { id: ATT_DENIS, taskId: REVIEW_TASK, slotId: "s-r-1", personId: "p-denis", status: "working", startedAt: "2026-09-05T09:00:00+08:00" },
+    ],
+    submissions: [
+      {
+        id: "sub-a",
+        taskId: VOICE_TASK,
+        slotId: "s-v-1",
+        attemptId: ATT_A,
+        personId: ALICE_ID,
+        kind: "pull_request",
+        title: "plugin/voice-stream: barge-in + streaming TTS",
+        url: "https://github.com/example/openclaw/pull/412",
+        note: "完整打断路径，偏稳不偏快。",
+        submittedAt: "2026-09-09T21:10:00+08:00",
+      },
+      {
+        id: "sub-b",
+        taskId: VOICE_TASK,
+        slotId: "s-v-2",
+        attemptId: ATT_B,
+        personId: BOB_ID,
+        kind: "pull_request",
+        title: "low-latency voice path, shared buffer",
+        url: "https://github.com/example/openclaw/pull/418",
+        note: "P95 压到 710ms，打断略激进。",
+        submittedAt: "2026-09-10T01:40:00+08:00",
+      },
+      {
+        id: "sub-c",
+        taskId: VOICE_TASK,
+        slotId: "s-v-3",
+        attemptId: ATT_C,
+        personId: CAROL_ID,
+        kind: "pull_request",
+        title: "voice plugin with exhaustive harness",
+        url: "https://github.com/example/openclaw/pull/421",
+        note: "测试全绿，延迟偏保守。",
+        submittedAt: "2026-09-10T08:05:00+08:00",
+      },
+    ],
+    evaluations: [],
+    suites: [
+      { id: "suite-reliability", key: "common/reliability-v2", name: "通用可靠性", category: "通用质量", version: "v2.0", summary: "启动、异常退出、超时、重试、资源泄漏。", caseCount: 5 },
+      { id: "suite-streaming", key: "ai/streaming-v3", name: "流式模型", category: "AI Model", version: "v3.0", summary: "Streaming、Token Limit、Tool Calling、Provider Failure。", caseCount: 4 },
+      { id: "suite-voice", key: "voice/realtime-interruption-v1", name: "实时语音打断", category: "Voice", version: "v4.1", summary: "ASR / TTS / barge-in / 延迟 / 噪声，含真实事故回归。", caseCount: 8 },
+      { id: "suite-review", key: "review/architecture-rubric-v1", name: "架构评审量表", category: "评审", version: "v1.0", summary: "事实引用、覆盖率、矛盾、来源有效性。", caseCount: 4 },
+      { id: "suite-deploy", key: "deployment/field-v1", name: "现场实施", category: "Deployment", version: "v1.0", summary: "安装、升级、回滚、恢复、健康检查。", caseCount: 5 },
+    ],
+    cases: [
+      { id: "tc-rel-01", suiteId: "suite-reliability", code: "TC-REL-001", title: "冷启动成功", kind: "automated", required: true, description: "进程在 3s 内进入 ready。", origin: "authored" },
+      { id: "tc-rel-02", suiteId: "suite-reliability", code: "TC-REL-002", title: "异常退出可恢复", kind: "automated", required: true, description: "SIGTERM 后无僵尸进程。", origin: "authored" },
+      { id: "tc-rel-03", suiteId: "suite-reliability", code: "TC-REL-003", title: "上游超时", kind: "automated", required: true, description: "依赖 2s 无响应时有明确错误，不挂死。", origin: "authored" },
+      { id: "tc-rel-04", suiteId: "suite-reliability", code: "TC-REL-004", title: "有限重试", kind: "automated", required: false, description: "瞬时失败最多重试 3 次。", origin: "authored" },
+      { id: "tc-rel-05", suiteId: "suite-reliability", code: "TC-REL-005", title: "无资源泄漏", kind: "automated", required: true, description: "10 分钟稳态后 RSS 增长 < 8%。", origin: "authored" },
+      { id: "tc-ai-01", suiteId: "suite-streaming", code: "TC-AI-001", title: "流式输出不打断", kind: "automated", required: true, description: "token 流连续，无整包缓冲。", origin: "authored" },
+      { id: "tc-ai-02", suiteId: "suite-streaming", code: "TC-AI-002", title: "Token 上限", kind: "automated", required: true, description: "超限时优雅截断。", origin: "authored" },
+      { id: "tc-ai-03", suiteId: "suite-streaming", code: "TC-AI-003", title: "工具调用", kind: "automated", required: true, description: "tool call 参数完整可解析。", origin: "authored" },
+      { id: "tc-ai-04", suiteId: "suite-streaming", code: "TC-AI-004", title: "供应商失败", kind: "automated", required: true, description: "provider 5xx 时切换或报错，不吞掉会话。", origin: "authored" },
+      { id: "tc-voice-01", suiteId: "suite-voice", code: "TC-VOICE-001", title: "流式 ASR", kind: "automated", required: true, description: "部分结果在 300ms 内出现。", origin: "authored" },
+      { id: "tc-voice-02", suiteId: "suite-voice", code: "TC-VOICE-002", title: "流式 TTS", kind: "automated", required: true, description: "首包音频 < 400ms。", origin: "authored" },
+      { id: "tc-voice-03", suiteId: "suite-voice", code: "TC-VOICE-003", title: "Barge-in", kind: "benchmark", required: true, description: "用户插话后 200ms 内停播。", origin: "authored" },
+      { id: "tc-voice-04", suiteId: "suite-voice", code: "TC-VOICE-004", title: "P95 延迟 < 800ms", kind: "benchmark", required: true, description: "回合级 P95 必须低于合同阈值。", origin: "authored" },
+      { id: "tc-voice-05", suiteId: "suite-voice", code: "TC-VOICE-005", title: "噪声鲁棒", kind: "automated", required: false, description: "SNR 10dB 下意图仍可解析。", origin: "authored" },
+      { id: "tc-voice-17", suiteId: "suite-voice", code: "TC-VOICE-017", title: "Wi-Fi 闪断后 TTS 必须重连", kind: "regression", required: true, description: "断开 3 秒再恢复，TTS 不得永久卡死。", origin: "regression", originNote: "2026-08 现场：Wi-Fi 闪断 3s，TTS 永远无法重连。" },
+      { id: "tc-voice-31", suiteId: "suite-voice", code: "TC-VOICE-031", title: "二次打断", kind: "regression", required: false, description: "连续两次 barge-in 不丢会话。", origin: "regression", originNote: "内部试跑发现。" },
+      { id: "tc-net-04", suiteId: "suite-voice", code: "TC-NET-004", title: "弱网抖动", kind: "automated", required: false, description: "200ms jitter 下不崩溃。", origin: "authored" },
+      { id: "tc-rev-01", suiteId: "suite-review", code: "TC-REV-001", title: "事实引用检查", kind: "rubric", required: true, description: "关键论断必须指向可解析来源。", origin: "authored" },
+      { id: "tc-rev-02", suiteId: "suite-review", code: "TC-REV-002", title: "覆盖率", kind: "rubric", required: true, description: "合同列出的子系统均被覆盖。", origin: "authored" },
+      { id: "tc-rev-03", suiteId: "suite-review", code: "TC-REV-003", title: "矛盾检测", kind: "rubric", required: true, description: "文档内部与上游文档无未解释矛盾。", origin: "authored" },
+      { id: "tc-rev-04", suiteId: "suite-review", code: "TC-REV-004", title: "来源有效性", kind: "checklist", required: true, description: "链接可访问，版本钉死。", origin: "authored" },
+      { id: "tc-dep-01", suiteId: "suite-deploy", code: "TC-DEP-001", title: "服务可访问", kind: "checklist", required: true, description: "约定端口对外可探活。", origin: "authored" },
+      { id: "tc-dep-02", suiteId: "suite-deploy", code: "TC-DEP-002", title: "健康检查", kind: "automated", required: true, description: "/health 返回 ready。", origin: "authored" },
+      { id: "tc-dep-03", suiteId: "suite-deploy", code: "TC-DEP-003", title: "备份校验", kind: "checklist", required: true, description: "备份可还原到演练环境。", origin: "authored" },
+      { id: "tc-dep-04", suiteId: "suite-deploy", code: "TC-DEP-004", title: "回滚演练", kind: "checklist", required: true, description: "一键回滚并恢复服务。", origin: "authored" },
+      { id: "tc-dep-05", suiteId: "suite-deploy", code: "TC-DEP-005", title: "升级路径", kind: "checklist", required: false, description: "小版本升级不中断会话。", origin: "authored" },
+    ],
+    specs: [
+      {
+        id: SPEC_VOICE,
+        key: "voice-runtime-v3.2",
+        name: "实时语音运行时",
+        version: "v3.2",
+        image: "voice-runtime:v3.2",
+        cpu: 4,
+        memoryGb: 8,
+        network: "restricted",
+        timeout: "20m",
+        runtime: { node: "24" },
+        services: ["redis"],
+        secretNames: ["DEEPSEEK_API_KEY"],
+        fixtures: ["noisy-room.wav", "interrupt-test.wav", "wifi-blip-3s.pcap"],
+        summary: "三人同一镜像、同一夹具、无外网。半年后有人说「我当时过了」，用 spec + suite + commit 回答。",
+      },
+      {
+        id: SPEC_REVIEW,
+        key: "review-rubric-v1",
+        name: "架构评审量表环境",
+        version: "v1.0",
+        image: "rubric-runner:v1",
+        cpu: 1,
+        memoryGb: 2,
+        network: "allowlist",
+        timeout: "30m",
+        services: [],
+        secretNames: [],
+        fixtures: ["aedes-control-loop.pdf", "incident-log-2026.csv"],
+        summary: "非代码任务也有环境：钉死的文档版本与可解析来源白名单。",
+      },
+      {
+        id: SPEC_FIELD,
+        key: "field-airgap-v1",
+        name: "现场气隙验收",
+        version: "v1.0",
+        image: "none",
+        cpu: 0,
+        memoryGb: 0,
+        network: "airgap",
+        timeout: "72h",
+        services: [],
+        secretNames: ["SITE_VPN"],
+        fixtures: ["rollback-drill.md"],
+        summary: "实施任务的环境是现场，不是容器。仍然要版本化。",
+      },
+    ],
+    runs: [],
+    caseResults: [],
+    verifications: [],
+    awards: [],
+    settlements: [],
+    journal: [
+      { id: "j1", taskId: VOICE_TASK, at: "2026-09-01T09:00:00+08:00", kind: "publish", text: "合同发布。模式 contest · 3 席 · 需审批。环境 voice-runtime-v3.2。" },
+      { id: "j2", taskId: VOICE_TASK, at: "2026-09-02T16:05:00+08:00", kind: "slots", text: "三席已满：Alice / Bob / Carol。Task = active。" },
+      { id: "j3", taskId: VOICE_TASK, at: "2026-09-10T08:05:00+08:00", kind: "submit", text: "三份 Attempt 均 submitted。Task 进入 judging。各候选人进度不再写回 Task。" },
+    ],
+  };
+}
+
+/** Predetermined sandbox outcomes — fair compare, same spec, same suites. */
+export const VOICE_RUN_SCRIPT: Record<
+  string,
+  {
+    passed: number;
+    total: number;
+    p50Ms: number;
+    p95Ms: number;
+    interruptPct: number;
+    memoryMb: number;
+    failedCaseIds: string[];
+  }
+> = {
+  "sub-a": {
+    passed: 48,
+    total: 50,
+    p50Ms: 610,
+    p95Ms: 920,
+    interruptPct: 98,
+    memoryMb: 620,
+    failedCaseIds: ["tc-voice-17", "tc-voice-31"],
+  },
+  "sub-b": {
+    passed: 46,
+    total: 50,
+    p50Ms: 480,
+    p95Ms: 710,
+    interruptPct: 91,
+    memoryMb: 410,
+    failedCaseIds: ["tc-voice-05", "tc-voice-31", "tc-net-04", "tc-rel-04"],
+  },
+  "sub-c": {
+    passed: 50,
+    total: 50,
+    p50Ms: 820,
+    p95Ms: 1300,
+    interruptPct: 99,
+    memoryMb: 390,
+    failedCaseIds: [],
+  },
+};
+
+export const VOICE_CASE_SCRIPT: Record<
+  string,
+  Omit<TestCaseResult, "id" | "runId" | "attemptId">[]
+> = {
+  "sub-a": [
+    { caseId: "tc-voice-04", outcome: "fail", expected: "P95 < 800ms", actual: "920ms", durationMs: 48000, failureReason: "回合级尾延迟超合同阈值", artifacts: ["metrics.json"] },
+    { caseId: "tc-voice-17", outcome: "fail", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "TTS 永久卡死", durationMs: 14000, failureReason: "重连路径没有监听 network online", artifacts: ["logs", "audio", "wifi-blip-3s.pcap"] },
+    { caseId: "tc-voice-31", outcome: "fail", expected: "连续两次 barge-in 保持会话", actual: "第二次打断后 session = null", durationMs: 860, failureReason: "共享缓冲被第一次打断释放", artifacts: ["trace"] },
+  ],
+  "sub-b": [
+    { caseId: "tc-voice-04", outcome: "pass", expected: "P95 < 800ms", actual: "710ms", durationMs: 48000, artifacts: ["metrics.json"] },
+    { caseId: "tc-voice-17", outcome: "pass", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "1.1s 重连", durationMs: 4100, artifacts: ["logs"] },
+    { caseId: "tc-voice-05", outcome: "fail", expected: "SNR 10dB 意图可解析", actual: "意图置信 0.31", durationMs: 1200, failureReason: "噪声模型未启用", artifacts: ["audio"] },
+    { caseId: "tc-voice-31", outcome: "fail", expected: "连续两次 barge-in 保持会话", actual: "第二次打断丢 1 个 user turn", durationMs: 640, artifacts: ["trace"] },
+    { caseId: "tc-net-04", outcome: "fail", expected: "200ms jitter 不崩溃", actual: "jitter 缓冲溢出", durationMs: 2200, artifacts: ["logs"] },
+    { caseId: "tc-rel-04", outcome: "fail", expected: "瞬时失败最多重试 3 次", actual: "无限重试", durationMs: 9000, artifacts: ["logs"] },
+  ],
+  "sub-c": [
+    { caseId: "tc-voice-04", outcome: "fail", expected: "P95 < 800ms", actual: "1300ms", durationMs: 48000, failureReason: "测试全绿但尾延迟超阈值。相对好看不够。", artifacts: ["metrics.json"] },
+    { caseId: "tc-voice-17", outcome: "pass", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "0.8s 重连", durationMs: 3800, artifacts: ["logs"] },
+  ],
+};
+
+export const VOICE_EVAL_SCRIPT: Record<
+  string,
+  { score: number; rank: number; summary: string; dimensions: { name: string; score: number }[] }
+> = {
+  "sub-a": {
+    score: 91,
+    rank: 1,
+    summary: "结构清晰，打断路径完整。相对最优，但尚未证明绝对合格。",
+    dimensions: [
+      { name: "架构", score: 94 },
+      { name: "打断", score: 93 },
+      { name: "延迟", score: 78 },
+      { name: "可维护", score: 90 },
+    ],
+  },
+  "sub-b": {
+    score: 86,
+    rank: 2,
+    summary: "延迟最好。打断略激进，可选用例有缺口。",
+    dimensions: [
+      { name: "架构", score: 84 },
+      { name: "打断", score: 80 },
+      { name: "延迟", score: 96 },
+      { name: "可维护", score: 82 },
+    ],
+  },
+  "sub-c": {
+    score: 73,
+    rank: 3,
+    summary: "测试全覆盖，但 P95 明显高于合同 800ms 阈值。",
+    dimensions: [
+      { name: "架构", score: 80 },
+      { name: "打断", score: 88 },
+      { name: "延迟", score: 52 },
+      { name: "可维护", score: 91 },
+    ],
+  },
+};
