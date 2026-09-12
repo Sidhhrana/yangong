@@ -109,7 +109,40 @@ test("Carol (sub-c): unlisted test cases PASS, but Verification FAILS because P9
   // Overall Verification fails due to contractual SLA threshold P95 < 800ms
   const verification = verifySandboxRun(run, results, { maxP95Ms: 800 });
   assert.equal(verification.outcome, "fail");
-  assert.match(verification.reason, /P95 latency SLA breached: actual 1300ms exceeds contract threshold 800ms/);
+  assert.match(verification.reason, /P95 latency SLA breached: actual 1300ms/);
+});
+
+test("P95 严格不等式边界测试 (P95 < 800ms: 799ms PASS, 800ms FAIL, 801ms FAIL)", () => {
+  const baseRun: SandboxRun = {
+    id: "run-p95-boundary",
+    taskId: "t-voice",
+    attemptId: "att-p95",
+    submissionId: "sub-p95",
+    specId: "spec-voice",
+    image: "voice-runtime:v3.2",
+    status: "completed",
+    passed: 19,
+    total: 19,
+    failedCaseIds: [],
+    artifacts: ["metrics.json"],
+    startedAt: "2026-09-12T12:00:00Z",
+    finishedAt: "2026-09-12T12:05:00Z",
+  };
+  const dummyResults: TestCaseResult[] = [];
+
+  // 1. 799ms -> PASS (满足严格 < 800ms)
+  const ver799 = verifySandboxRun({ ...baseRun, p95Ms: 799 }, dummyResults, { maxP95Ms: 800 });
+  assert.equal(ver799.outcome, "pass");
+
+  // 2. 800ms -> FAIL (不满足严格 < 800ms)
+  const ver800 = verifySandboxRun({ ...baseRun, p95Ms: 800 }, dummyResults, { maxP95Ms: 800 });
+  assert.equal(ver800.outcome, "fail");
+  assert.match(ver800.reason, /P95 latency SLA breached/);
+
+  // 3. 801ms -> FAIL (不满足严格 < 800ms)
+  const ver801 = verifySandboxRun({ ...baseRun, p95Ms: 801 }, dummyResults, { maxP95Ms: 800 });
+  assert.equal(ver801.outcome, "fail");
+  assert.match(ver801.reason, /P95 latency SLA breached/);
 });
 
 test("Security & Contract: secrets only contain names, never values", () => {

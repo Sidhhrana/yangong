@@ -87,10 +87,10 @@ export function verifySandboxRun(
 
   // 3. Check Benchmark SLA threshold (contractual rule: P95 < maxP95Ms)
   const maxP95 = criteria.maxP95Ms ?? 800;
-  if (run.p95Ms !== undefined && run.p95Ms > maxP95) {
+  if (run.p95Ms !== undefined && run.p95Ms >= maxP95) {
     outcome = "fail";
     reasons.push(
-      `P95 latency SLA breached: actual ${run.p95Ms}ms exceeds contract threshold ${maxP95}ms`
+      `P95 latency SLA breached: actual ${run.p95Ms}ms does not satisfy contract strict threshold P95 < ${maxP95}ms`
     );
   }
 
