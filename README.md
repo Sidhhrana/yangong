@@ -49,12 +49,14 @@ SandboxRun 不能只说 47/50。必须能回答：TC-VOICE-017 期望什么、�
 3. 在 [Good first issues](https://github.com/lilei0311/yangong/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) 里认领一份迷你合同
 4. 开 PR。相对好看不够，必须通过 Issue 里的验收
 
+带 `bounty` 标签的 Issue 才付钱：**人民币，只支付宝**。不付链上钱包、Stripe、PayPal、微信。贴 `0x` 钱包不当认领。
+
 Issue 模板本身就是 Task Contract：objective / deliverables / acceptance / test suites / sandbox spec / reward。
 
 ## 不在 V0.1 做的
 
 - 真·沙箱集群
-- 支付宝 / 微信自动打款（只记 Settlement）
+- 支付宝 / 微信自动打款（只记 Settlement；人工支付宝是现在的真钱通道）
 - GitHub App
 - 登录体系
 - 把托管预览的应用壳整包开源（那是另一条合同）
