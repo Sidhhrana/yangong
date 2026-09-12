@@ -285,6 +285,7 @@ export interface Award {
   taskId: string;
   personId: string;
   attemptId: string;
+  currency: "CNY";
   base: number;
   qualityBonus: number;
   upstreamBonus: number;
@@ -294,7 +295,8 @@ export interface Award {
 export interface Settlement {
   id: string;
   awardId: string;
-  method: "alipay" | "wechat" | "bank" | "manual";
+  method: "alipay";
+  currency: "CNY";
   status: "pending" | "paid" | "failed";
   amount: number;
   paidAt?: string;

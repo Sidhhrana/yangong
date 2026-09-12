@@ -23,6 +23,10 @@
    可替换，不进入领域内核
 ```
 
+GitHub 映射见 [ADR 0001](adr/0001-github-connector.md)：Issue URL → `sourceType` + `sourceUrl`，PR URL → `Submission.kind = pull_request`。领域里没有 Octokit，没有 `github_issue_id`。
+
+支付宝映射见 [ADR 0002](adr/0002-alipay-settlement.md)：`Settlement.paid` 必须挂 16–32 位订单号。合 PR 不是打款。
+
 ## 地基四件套
 
 1. **TaskContract** 定义「我要什么」

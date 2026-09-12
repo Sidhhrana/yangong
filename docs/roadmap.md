@@ -20,13 +20,16 @@
 - [x] 评审任务走量表，禁止复用语音脚本
 - [x] 协作猎虫：投标人可提交回归
 - [x] 两台状态机非法迁移单测
-- [x] 英文文档
+- [x] Owner 运营台：待公示 / 待裁决 / 待支付
+- [x] 投标人提交成果（实施记录 / 备忘 / PR）
+- [x] 独占实施可走完现场清单
+- [x] 协作微奖：有效回归 → ¥100 支付宝待付，任务继续开放
 
 ## V0.3 · 连接器
 
-- [ ] GitHub App：Issue → Task，PR URL → Submission
-- [ ] 人工结算凭证上传
-- [ ] 真·隔离沙箱（一个 task type 先打通，按 SandboxSpec 起环境）
+- [x] GitHub：Issue → 草稿合同，PR URL → Submission（无 webhook、无 Octokit）
+- [x] 人工结算凭证：支付宝订单号才能 paid
+- [ ] 真·隔离沙箱（一个 task type 先打通，按 SandboxSpec 起环境）← 等 #3 适配器，不抢
 
 ## 以后维护者只做的事
 
