@@ -49,8 +49,8 @@ body:
     id: reward
     attributes:
       label: Reward
-      description: 奖池与规则。Winner ≠ Paid。
-      placeholder: "¥0 OSS contract · or ¥3000 contest winner"
+      description: 真钱只打人民币、只走支付宝。不付 ETH/USDC/Stripe/PayPal/微信。Winner ≠ Paid。没钱就写 ¥0 OSS。
+      placeholder: "¥0 OSS contract · 或 ¥200 仅支付宝"
   - type: dropdown
     id: slots
     attributes:
