@@ -67,8 +67,8 @@ SandboxRunner 是 Verification Infrastructure 的执行边界，**不是 Connect
 
 - 吃整份 `SandboxSpec` + Submission + suiteIds
 - 吐 `SandboxRun` + `TestCaseResult[]`
-- 聚合必须走 `reconcile`。未列出的用例视为通过，total 来自库存
-- P95 是 `TC-VOICE-004`，不是 Verification 旁路
+- 聚合必须走 `reconcile`。未列出的用例视为通过，total 来自库存。重复 caseId 算一次，冲突结论拒绝。
+- P95 是 `TC-VOICE-004`，合同写在 expected：`P95 < 800ms`。800ms 不是过。不是 Verification 旁路。
 - 不改 Task，不写 Verification，不碰状态机
 - `secretNames` 只有名
 - 内存实现：`InMemoryVoiceRunner`（`voice-runtime-v3.2`）。换 Docker 只换 Runner

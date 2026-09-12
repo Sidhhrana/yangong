@@ -29,3 +29,42 @@ test("失败加跳过不能超过 total", () => {
     ),
   );
 });
+
+test("重复同结论只算一次，默认 total 按唯一 caseId", () => {
+  assert.deepEqual(
+    reconcile([
+      { caseId: "a", outcome: "fail" },
+      { caseId: "a", outcome: "fail" },
+    ]),
+    { passed: 0, total: 1, failedCaseIds: ["a"] },
+  );
+});
+
+test("同一 case 冲突结论拒绝", () => {
+  assert.throws(() =>
+    reconcile([
+      { caseId: "a", outcome: "fail" },
+      { caseId: "a", outcome: "skip" },
+    ]),
+  );
+  assert.throws(() =>
+    reconcile([
+      { caseId: "a", outcome: "pass" },
+      { caseId: "a", outcome: "fail" },
+    ]),
+  );
+});
+
+test("显式库存仍把未列出的当通过；重复失败不额外占名额", () => {
+  const agg = reconcile(
+    [
+      { caseId: "a", outcome: "fail" },
+      { caseId: "a", outcome: "fail" },
+    ],
+    2,
+  );
+  assert.equal(agg.passed, 1);
+  assert.equal(agg.total, 2);
+  assert.deepEqual(agg.failedCaseIds, ["a"]);
+});
+

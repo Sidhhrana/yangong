@@ -5,6 +5,7 @@
  */
 
 import { reconcile } from "./run.ts";
+import { judgeBound } from "./bound.ts";
 import { assertSecretNamesOnly, type SandboxExecution, type SandboxJob, type SandboxRunner } from "./sandbox.ts";
 import type { SandboxSpec, TestCaseResult } from "./types.ts";
 
@@ -34,6 +35,15 @@ export const VOICE_CASE_SCRIPT: Record<
   ],
 };
 
+function applyBounds(
+  rows: Omit<TestCaseResult, "id" | "runId" | "attemptId">[],
+): Omit<TestCaseResult, "id" | "runId" | "attemptId">[] {
+  return rows.map((row) => {
+    const judged = judgeBound(row.expected, row.actual);
+    return judged ? { ...row, outcome: judged } : row;
+  });
+}
+
 const VOICE_METRICS: Record<string, { p50Ms: number; p95Ms: number; interruptPct: number; memoryMb: number }> = {
   "sub-a": { p50Ms: 610, p95Ms: 920, interruptPct: 98, memoryMb: 620 },
   "sub-b": { p50Ms: 480, p95Ms: 710, interruptPct: 91, memoryMb: 410 },
@@ -54,7 +64,7 @@ export const VOICE_RUN_SCRIPT: Record<
 > = Object.fromEntries(
   Object.entries(VOICE_CASE_SCRIPT).map(([id, rows]) => [
     id,
-    { ...VOICE_METRICS[id], ...reconcile(rows, VOICE_CASE_TOTAL) },
+    { ...VOICE_METRICS[id], ...reconcile(applyBounds(rows), VOICE_CASE_TOTAL) },
   ]),
 );
 
@@ -73,10 +83,11 @@ export class InMemoryVoiceRunner implements SandboxRunner {
     if (job.suiteIds.length === 0) {
       throw new Error("suiteIds 不能空");
     }
-    const rows = VOICE_CASE_SCRIPT[job.submission.id];
-    if (!rows) {
+    const raw = VOICE_CASE_SCRIPT[job.submission.id];
+    if (!raw) {
       throw new Error(`没有夹具 ${job.submission.id}`);
     }
+    const rows = applyBounds(raw);
     const catalogTotal = job.catalogTotal ?? VOICE_CASE_TOTAL;
     const agg = reconcile(rows, catalogTotal);
     const metrics = VOICE_METRICS[job.submission.id];

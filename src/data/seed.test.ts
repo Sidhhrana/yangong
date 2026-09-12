@@ -93,6 +93,14 @@ test("相对评审套件：第 1 名可 FAIL、不能跳号、门槛、同分", 
   assert.equal(s.suites.find((x) => x.id === "suite-eval")?.caseCount, 4);
 });
 
+test("对账套件：重复、冲突、P95 写在用例上", () => {
+  const s = createSeed();
+  const rows = s.cases.filter((c) => c.suiteId === "suite-run");
+  assert.equal(rows.length, 3);
+  assert.ok(rows.every((c) => c.required && /FAIL/.test(c.description)));
+  assert.equal(s.suites.find((x) => x.id === "suite-run")?.caseCount, 3);
+});
+
 test("认领事故进了验证库，且 seed Claim 符合 exclusive 规则", () => {
   const s = createSeed();
   const rows = s.cases.filter((c) => c.suiteId === "suite-claim");

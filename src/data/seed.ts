@@ -313,6 +313,7 @@ export function createSeed(): YangongState {
       { id: "suite-article", key: "article/technical-memo-v1", name: "技术备忘", category: "文章", version: "v1.0", summary: "论断有引用，命令能跑，版本钉死。", caseCount: 3 },
       { id: "suite-claim", key: "market/claim-identity-v1", name: "认领与身份", category: "市场", version: "v1.0", summary: "口令占席。钱包不是认领。GitHub 身份不是支付宝。未占席的 PR 不是 Winner。", caseCount: 5 },
       { id: "suite-eval", key: "market/evaluation-v1", name: "相对评审", category: "市场", version: "v1.0", summary: "排名从分数来。第 1 名也可以绝对失败。不能跳号拟中标。", caseCount: 4 },
+      { id: "suite-run", key: "market/reconcile-v1", name: "对账与合同阈值", category: "市场", version: "v1.0", summary: "重复 caseId 不算两次。P95 写在用例上。800ms 不是过。", caseCount: 3 },
     ],
     cases: [
       { id: "tc-rel-01", suiteId: "suite-reliability", code: "TC-REL-001", title: "冷启动成功", kind: "automated", required: true, description: "进程在 3s 内进入 ready。", origin: "authored" },
@@ -327,7 +328,7 @@ export function createSeed(): YangongState {
       { id: "tc-voice-01", suiteId: "suite-voice", code: "TC-VOICE-001", title: "流式 ASR", kind: "automated", required: true, description: "部分结果在 300ms 内出现。", origin: "authored" },
       { id: "tc-voice-02", suiteId: "suite-voice", code: "TC-VOICE-002", title: "流式 TTS", kind: "automated", required: true, description: "首包音频 < 400ms。", origin: "authored" },
       { id: "tc-voice-03", suiteId: "suite-voice", code: "TC-VOICE-003", title: "Barge-in", kind: "benchmark", required: true, description: "用户插话后 200ms 内停播。", origin: "authored" },
-      { id: "tc-voice-04", suiteId: "suite-voice", code: "TC-VOICE-004", title: "P95 延迟 < 800ms", kind: "benchmark", required: true, description: "回合级 P95 必须低于合同阈值。", origin: "authored" },
+      { id: "tc-voice-04", suiteId: "suite-voice", code: "TC-VOICE-004", title: "P95 延迟 < 800ms", kind: "benchmark", required: true, description: "回合级 P95 必须严格低于 800ms。799 → PASS，800 → FAIL，801 → FAIL。合同写在 expected 上，不是 Verification 旁路。反例：p95Ms === 800 判过 → FAIL。反例：50/50 全绿再另开 SLA 层 → FAIL。", origin: "authored" },
       { id: "tc-voice-05", suiteId: "suite-voice", code: "TC-VOICE-005", title: "噪声鲁棒", kind: "automated", required: false, description: "SNR 10dB 下意图仍可解析。", origin: "authored" },
       { id: "tc-voice-17", suiteId: "suite-voice", code: "TC-VOICE-017", title: "Wi-Fi 闪断后 TTS 必须重连", kind: "regression", required: true, description: "断开 3 秒再恢复，TTS 不得永久卡死。", origin: "regression", originNote: "2026-08 现场：Wi-Fi 闪断 3s，TTS 永远无法重连。" },
       { id: "tc-voice-18", suiteId: "suite-voice", code: "TC-VOICE-018", title: "弱网下 barge-in < 200ms", kind: "regression", required: true, description: "在 200ms jitter 的弱网下，用户插话后 200ms 内必须停播。jitter 本身不算失败。停播超过 200ms、会话断开、或只把 jitter 当错误，均 FAIL。", origin: "regression", originNote: "预演：办公室 4G 热点 200ms jitter，插话后 TTS 又播了 1.4s。" },
@@ -363,6 +364,9 @@ export function createSeed(): YangongState {
       { id: "tc-eval-02", suiteId: "suite-eval", code: "TC-EVAL-002", title: "不能跳号拟中标", kind: "checklist", required: true, description: "仍 qualified 或 passed 的更高名次还在时，不能把第 3 名设为 provisional。反例：第 2 名还合格，Owner 点了第 3 名 → FAIL。", origin: "regression", originNote: "控制台曾按 evaluations[0] 提名，数组下标不是名次。" },
       { id: "tc-eval-03", suiteId: "suite-eval", code: "TC-EVAL-003", title: "低于门槛取消资格", kind: "checklist", required: true, description: "score < 60 必须 disqualified，rank=0，不能进入拟中标候选。反例：52 分排第 3 然后被递补 → FAIL。", origin: "authored" },
       { id: "tc-eval-04", suiteId: "suite-eval", code: "TC-EVAL-004", title: "同分先提交者靠前", kind: "checklist", required: true, description: "score 相同按 Submission.submittedAt 升序。反例：后交的同分被排第 1 → FAIL。", origin: "authored" },
+      { id: "tc-run-01", suiteId: "suite-run", code: "TC-RUN-001", title: "重复 caseId 同结论算一次", kind: "checklist", required: true, description: "默认 total 按唯一 caseId。两次 fail a 不得变成 passed=1 total=2。反例：重复失败行凭空多一次通过 → FAIL。", origin: "regression", originNote: "Issue #26：reconcile 两行 fail a 得到 passed:1 total:2。" },
+      { id: "tc-run-02", suiteId: "suite-run", code: "TC-RUN-002", title: "同一 case 冲突结论必须拒绝", kind: "checklist", required: true, description: "同一 caseId 同时 fail 与 skip / pass 与 fail 必须扔。反例：当两个未通过用例扣，passed=0 → FAIL。", origin: "regression", originNote: "Issue #26：fail+skip 同一 id、显式 total=2 把冲突当成两例。" },
+      { id: "tc-run-03", suiteId: "suite-run", code: "TC-RUN-003", title: "P95 阈值在用例上，800 不是过", kind: "checklist", required: true, description: "expected `P95 < 800ms` 用严格小于。不要 verifySandboxRun 旁路。Carol 的 1300ms 是 TC-VOICE-004 失败，不是 50/50 全绿。反例：run.p95Ms > 800 才 fail，把 800 判过 → FAIL。", origin: "regression", originNote: "Issue #28 按 PR #12 的旁路 SLA 提的。协议不接受那一层。" },
     ],
     specs: [
       {

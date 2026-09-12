@@ -71,6 +71,12 @@
 - [x] 回归从真实失败沉淀，不再写死 TC-VOICE-042
 - [x] SandboxRunner 维护者基准在 main。#3 悬赏仍开。
 
+## V0.8 · 对账边界
+
+- [x] 重复 caseId 同结论算一次；冲突拒绝（#26）
+- [x] `P95 < 800ms` 严格小于，写在用例上，不是 verifySandboxRun（#28）
+- [x] 事故进验证库 `market/reconcile-v1`
+
 ## 以后维护者只做的事
 
 写 Issue。验收 PR。保护两台状态机。把事故写进验证库。
