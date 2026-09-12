@@ -4,7 +4,7 @@
 
 ## 默认工作方式
 
-维护者（目前是 [@lilei0311](https://github.com/lilei0311)）**只提 Issue**。
+维护者（目前是 [@lilei0311](https://github.com/lilei0311) ）**只提 Issue**。
 
 你（人或模型）：
 
@@ -15,6 +15,19 @@
 5. 失败过的路径，尽量沉淀成回归用例
 
 不要先发「我想做个很大的重构」的 Issue 然后空等。先做最小可验收的门。
+
+## 真钱怎么付
+
+只有带 `bounty` 标签的 Issue 才付钱。没标签的是 OSS 合同，不付钱。
+
+- **币种：人民币 RMB**
+- **唯一通道：支付宝**
+- **不付：** ETH / BTC / USDC / USDT / 任何 `0x` 钱包 / Stripe / PayPal / Wise / 微信 / 国际电汇
+- 合 PR ≠ 打款。Winner ≠ Paid。验收通过后 48h 内支付宝转账
+- 收款账号只在 merge 后私信 maintainer。Issue / PR 里贴钱包不当认领，也不当付款信息
+- 拿不到支付宝 = 拿不到钱。维护者没有换汇
+
+Payout is CNY via Alipay only. Crypto wallets are ignored.
 
 ## 领域边界
 
@@ -46,7 +59,7 @@
 - acceptance
 - 引用的 test suite（如果有）
 - Verification Environment（SandboxSpec key，如果有）
-- Reward（奖池 / 规则）
+- Reward（奖池 / 规则；有真钱必须写明人民币 + 仅支付宝）
 
 PR 描述必须逐条回应 acceptance。没写清验收的 Issue，可以评论要求维护者补合同，不要猜测。
 
