@@ -11,12 +11,16 @@
 
 公开仓库是 Protocol / Domain Spec，不是完整应用工程。
 
-## V0.2 · 社区把验证库养厚
+## V0.2 · 把控制台做成能发合同的市场
 
-- [ ] voice / review / deploy 套件各 +N 回归
-- [ ] SandboxRunner 适配器：吃 SandboxSpec，吐 SandboxRun + TestCaseResult[]（不接真容器）
-- [ ] 任务创建表单（Owner 发合同）
-- [ ] 英文文档
+- [x] voice / review / deploy 套件各 + 回归（TC-VOICE-018 / TC-REV-004 可判定 / TC-DEP-006）
+- [ ] SandboxRunner 适配器：吃 SandboxSpec，吐 SandboxRun + TestCaseResult[]（不接真容器）← 社区 #3
+- [x] 任务创建表单（Owner 发合同）
+- [x] Award 从合同奖池出账
+- [x] 评审任务走量表，禁止复用语音脚本
+- [x] 协作猎虫：投标人可提交回归
+- [x] 两台状态机非法迁移单测
+- [x] 英文文档
 
 ## V0.3 · 连接器
 

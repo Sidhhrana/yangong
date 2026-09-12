@@ -195,7 +195,7 @@ export function createSeed(): YangongState {
       { id: ATT_A, taskId: VOICE_TASK, slotId: "s-v-1", personId: ALICE_ID, submissionId: "sub-a", status: "submitted", startedAt: "2026-09-02T10:00:00+08:00" },
       { id: ATT_B, taskId: VOICE_TASK, slotId: "s-v-2", personId: BOB_ID, submissionId: "sub-b", status: "submitted", startedAt: "2026-09-02T11:20:00+08:00" },
       { id: ATT_C, taskId: VOICE_TASK, slotId: "s-v-3", personId: CAROL_ID, submissionId: "sub-c", status: "submitted", startedAt: "2026-09-02T16:05:00+08:00" },
-      { id: ATT_DENIS, taskId: REVIEW_TASK, slotId: "s-r-1", personId: "p-denis", status: "working", startedAt: "2026-09-05T09:00:00+08:00" },
+      { id: ATT_DENIS, taskId: REVIEW_TASK, slotId: "s-r-1", personId: "p-denis", submissionId: "sub-denis", status: "submitted", startedAt: "2026-09-05T09:00:00+08:00" },
     ],
     submissions: [
       {
@@ -234,14 +234,26 @@ export function createSeed(): YangongState {
         note: "测试全绿，延迟偏保守。",
         submittedAt: "2026-09-10T08:05:00+08:00",
       },
+      {
+        id: "sub-denis",
+        taskId: REVIEW_TASK,
+        slotId: "s-r-1",
+        attemptId: ATT_DENIS,
+        personId: "p-denis",
+        kind: "url",
+        title: "Aedes Twin 运动控制架构评审备忘",
+        url: "https://example.com/reviews/aedes-twin-control-loop",
+        note: "钉死 control_loop notes @ v0.9.4 与 incident-log-2026.csv。",
+        submittedAt: "2026-09-11T18:00:00+08:00",
+      },
     ],
     evaluations: [],
     suites: [
       { id: "suite-reliability", key: "common/reliability-v2", name: "通用可靠性", category: "通用质量", version: "v2.0", summary: "启动、异常退出、超时、重试、资源泄漏。", caseCount: 5 },
       { id: "suite-streaming", key: "ai/streaming-v3", name: "流式模型", category: "AI Model", version: "v3.0", summary: "Streaming、Token Limit、Tool Calling、Provider Failure。", caseCount: 4 },
-      { id: "suite-voice", key: "voice/realtime-interruption-v1", name: "实时语音打断", category: "Voice", version: "v4.1", summary: "ASR / TTS / barge-in / 延迟 / 噪声，含真实事故回归。", caseCount: 8 },
-      { id: "suite-review", key: "review/architecture-rubric-v1", name: "架构评审量表", category: "评审", version: "v1.0", summary: "事实引用、覆盖率、矛盾、来源有效性。", caseCount: 4 },
-      { id: "suite-deploy", key: "deployment/field-v1", name: "现场实施", category: "Deployment", version: "v1.0", summary: "安装、升级、回滚、恢复、健康检查。", caseCount: 5 },
+      { id: "suite-voice", key: "voice/realtime-interruption-v1", name: "实时语音打断", category: "Voice", version: "v4.2", summary: "ASR / TTS / barge-in / 延迟 / 噪声，含真实事故回归。", caseCount: 9 },
+      { id: "suite-review", key: "review/architecture-rubric-v1", name: "架构评审量表", category: "评审", version: "v1.1", summary: "事实引用、覆盖率、矛盾、来源有效性。", caseCount: 4 },
+      { id: "suite-deploy", key: "deployment/field-v1", name: "现场实施", category: "Deployment", version: "v1.1", summary: "安装、升级、回滚、恢复、健康检查。", caseCount: 6 },
     ],
     cases: [
       { id: "tc-rel-01", suiteId: "suite-reliability", code: "TC-REL-001", title: "冷启动成功", kind: "automated", required: true, description: "进程在 3s 内进入 ready。", origin: "authored" },
@@ -259,17 +271,19 @@ export function createSeed(): YangongState {
       { id: "tc-voice-04", suiteId: "suite-voice", code: "TC-VOICE-004", title: "P95 延迟 < 800ms", kind: "benchmark", required: true, description: "回合级 P95 必须低于合同阈值。", origin: "authored" },
       { id: "tc-voice-05", suiteId: "suite-voice", code: "TC-VOICE-005", title: "噪声鲁棒", kind: "automated", required: false, description: "SNR 10dB 下意图仍可解析。", origin: "authored" },
       { id: "tc-voice-17", suiteId: "suite-voice", code: "TC-VOICE-017", title: "Wi-Fi 闪断后 TTS 必须重连", kind: "regression", required: true, description: "断开 3 秒再恢复，TTS 不得永久卡死。", origin: "regression", originNote: "2026-08 现场：Wi-Fi 闪断 3s，TTS 永远无法重连。" },
+      { id: "tc-voice-18", suiteId: "suite-voice", code: "TC-VOICE-018", title: "弱网下 barge-in < 200ms", kind: "regression", required: true, description: "在 200ms jitter 的弱网下，用户插话后 200ms 内必须停播。jitter 本身不算失败。停播超过 200ms、会话断开、或只把 jitter 当错误，均 FAIL。", origin: "regression", originNote: "预演：办公室 4G 热点 200ms jitter，插话后 TTS 又播了 1.4s。" },
       { id: "tc-voice-31", suiteId: "suite-voice", code: "TC-VOICE-031", title: "二次打断", kind: "regression", required: false, description: "连续两次 barge-in 不丢会话。", origin: "regression", originNote: "内部试跑发现。" },
       { id: "tc-net-04", suiteId: "suite-voice", code: "TC-NET-004", title: "弱网抖动", kind: "automated", required: false, description: "200ms jitter 下不崩溃。", origin: "authored" },
       { id: "tc-rev-01", suiteId: "suite-review", code: "TC-REV-001", title: "事实引用检查", kind: "rubric", required: true, description: "关键论断必须指向可解析来源。", origin: "authored" },
       { id: "tc-rev-02", suiteId: "suite-review", code: "TC-REV-002", title: "覆盖率", kind: "rubric", required: true, description: "合同列出的子系统均被覆盖。", origin: "authored" },
       { id: "tc-rev-03", suiteId: "suite-review", code: "TC-REV-003", title: "矛盾检测", kind: "rubric", required: true, description: "文档内部与上游文档无未解释矛盾。", origin: "authored" },
-      { id: "tc-rev-04", suiteId: "suite-review", code: "TC-REV-004", title: "来源有效性", kind: "checklist", required: true, description: "链接可访问，版本钉死。", origin: "authored" },
+      { id: "tc-rev-04", suiteId: "suite-review", code: "TC-REV-004", title: "来源有效性", kind: "checklist", required: true, description: "每条引用必须同时满足：(1) URL 现在可解析（HTTP 2xx，不是 404/超时）；(2) 版本钉死为 commit SHA、tag 或带日期的规范编号，禁止 latest/master 浮动指向。反例：链接 404 → FAIL。反例：只写 https://docs.example.com/api 未钉版本 → FAIL。", origin: "authored" },
       { id: "tc-dep-01", suiteId: "suite-deploy", code: "TC-DEP-001", title: "服务可访问", kind: "checklist", required: true, description: "约定端口对外可探活。", origin: "authored" },
       { id: "tc-dep-02", suiteId: "suite-deploy", code: "TC-DEP-002", title: "健康检查", kind: "automated", required: true, description: "/health 返回 ready。", origin: "authored" },
       { id: "tc-dep-03", suiteId: "suite-deploy", code: "TC-DEP-003", title: "备份校验", kind: "checklist", required: true, description: "备份可还原到演练环境。", origin: "authored" },
       { id: "tc-dep-04", suiteId: "suite-deploy", code: "TC-DEP-004", title: "回滚演练", kind: "checklist", required: true, description: "一键回滚并恢复服务。", origin: "authored" },
       { id: "tc-dep-05", suiteId: "suite-deploy", code: "TC-DEP-005", title: "升级路径", kind: "checklist", required: false, description: "小版本升级不中断会话。", origin: "authored" },
+      { id: "tc-dep-06", suiteId: "suite-deploy", code: "TC-DEP-006", title: "回滚后进行中的会话必须恢复", kind: "regression", required: true, description: "一键回滚之后，任何进行中的门禁会话必须在 30s 内恢复。只有进程起来或 /health 变绿不算通过。反例：回滚后 8s 内 /health 绿，但刷卡会话 token 全部失效 → FAIL。", origin: "regression", originNote: "现场预演：回滚后门禁服务很快 ready，进行中的刷卡会话全部掉线。" },
     ],
     specs: [
       {
@@ -328,6 +342,7 @@ export function createSeed(): YangongState {
       { id: "j1", taskId: VOICE_TASK, at: "2026-09-01T09:00:00+08:00", kind: "publish", text: "合同发布。模式 contest · 3 席 · 需审批。环境 voice-runtime-v3.2。" },
       { id: "j2", taskId: VOICE_TASK, at: "2026-09-02T16:05:00+08:00", kind: "slots", text: "三席已满：Alice / Bob / Carol。Task = active。" },
       { id: "j3", taskId: VOICE_TASK, at: "2026-09-10T08:05:00+08:00", kind: "submit", text: "三份 Attempt 均 submitted。Task 进入 judging。各候选人进度不再写回 Task。" },
+      { id: "j4", taskId: REVIEW_TASK, at: "2026-09-11T18:00:00+08:00", kind: "submit", text: "Denis 提交评审备忘 URL。Task 仍是 active。量表还没跑。" },
     ],
   };
 }
@@ -432,6 +447,42 @@ export const VOICE_EVAL_SCRIPT: Record<
       { name: "打断", score: 88 },
       { name: "延迟", score: 52 },
       { name: "可维护", score: 91 },
+    ],
+  },
+};
+
+export const REVIEW_RUN_SCRIPT: Record<
+  string,
+  { passed: number; total: number; failedCaseIds: string[] }
+> = {
+  "sub-denis": { passed: 4, total: 4, failedCaseIds: [] },
+};
+
+export const REVIEW_CASE_SCRIPT: Record<
+  string,
+  Omit<TestCaseResult, "id" | "runId" | "attemptId">[]
+> = {
+  "sub-denis": [
+    { caseId: "tc-rev-01", outcome: "pass", expected: "关键论断指向可解析来源", actual: "12/12 论断有引用", durationMs: 400, artifacts: ["review-memo.md"] },
+    { caseId: "tc-rev-02", outcome: "pass", expected: "合同列出的子系统均被覆盖", actual: "控制环 / 传感 / 执行器均有专节", durationMs: 200, artifacts: ["review-memo.md"] },
+    { caseId: "tc-rev-03", outcome: "pass", expected: "无未解释矛盾", actual: "1 处时序差异已在备忘解释", durationMs: 350, artifacts: ["review-memo.md"] },
+    { caseId: "tc-rev-04", outcome: "pass", expected: "链接可解析且版本钉死。404 或 latest 未钉 = FAIL", actual: "4/4 HTTP 200，均钉 commit", durationMs: 1200, artifacts: ["source-check.json"] },
+  ],
+};
+
+export const REVIEW_EVAL_SCRIPT: Record<
+  string,
+  { score: number; rank: number; summary: string; dimensions: { name: string; score: number }[] }
+> = {
+  "sub-denis": {
+    score: 88,
+    rank: 1,
+    summary: "风险清单可执行，来源已钉版本。相对最优，仍要过量表。不是语音沙箱。",
+    dimensions: [
+      { name: "引用", score: 90 },
+      { name: "覆盖", score: 86 },
+      { name: "矛盾", score: 84 },
+      { name: "来源", score: 92 },
     ],
   },
 };

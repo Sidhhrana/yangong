@@ -46,17 +46,35 @@ SandboxRun 不能只说 47/50。必须能回答：TC-VOICE-017 期望什么、�
 
 1. 读 [docs/architecture.md](docs/architecture.md) 和 [docs/state-machine.md](docs/state-machine.md)
 2. 读 [CONTRIBUTING.md](CONTRIBUTING.md)（人和模型共用）
-3. 在 [Good first issues](https://github.com/lilei0311/yangong/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) 里认领一份迷你合同
-4. 开 PR。相对好看不够，必须通过 Issue 里的验收
-
-带 `bounty` 标签的 Issue 才付钱：**人民币，只支付宝**。不付链上钱包、Stripe、PayPal、微信。贴 `0x` 钱包不当认领。
+3. 不要认领已经写死的功能合同——那些维护者自己做。社区要的是合同里没有的现场知识
+4. 真钱 bounty：**人民币，只支付宝**。贴 `0x` 钱包不占席
 
 Issue 模板本身就是 Task Contract：objective / deliverables / acceptance / test suites / sandbox spec / reward。
+
+## English
+
+Yangong is an outcome-based Human + AI work exchange. It is **not** a bounty board.
+
+- **TaskContract** says what we want
+- **Verification Library** says how to prove it (TestCase / TestSuite)
+- **SandboxSpec** says where to prove it (versioned environment)
+- **SandboxRun** records this run; each failure is a **TestCaseResult** (expected / actual / why)
+
+**Task** is the market phase (`draft → open → active → judging → accepted → settling → closed`).
+**Attempt** is one candidate's progress. In a 3-slot contest, A can be verifying while B is still writing. Task stays `judging`. It does not become `verifying`.
+
+Relative ranking (Evaluation) answers "who is better". Absolute gates (Verification) answer "is it good enough". A pretty winner that fails TC-VOICE-017 is not accepted. **Winner ≠ Paid.** A failed provisional Attempt can be replaced by the next qualified one.
+
+The public repo is the protocol / domain spec. The clickable console is a hosted preview.
+
+Bounties, when they exist, pay **CNY via Alipay only**. Crypto wallets, Stripe, PayPal, and WeChat Pay are not payout rails. Merge ≠ paid.
+
+What the community should send: field knowledge that is **not** already written in an issue (a decidable regression from a real failure, a new environment, a protocol gap). Fully specified glue is maintainer work.
 
 ## 不在 V0.1 做的
 
 - 真·沙箱集群
-- 支付宝 / 微信自动打款（只记 Settlement；人工支付宝是现在的真钱通道）
+- 支付宝 / 微信自动打款（只记 Settlement）
 - GitHub App
 - 登录体系
 - 把托管预览的应用壳整包开源（那是另一条合同）
