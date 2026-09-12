@@ -56,7 +56,11 @@ V0.1：一个 Slot 一个 Attempt。同一席位多次重试是后续合同。
 - Task 为 `accepted` 时，必须恰好一个 Attempt 为 `accepted`。协作微奖可以在 Task 仍是 `active` 时已有 Attempt.accepted。
 - `provisionalAttemptId` 若有值，对应 Attempt 必须是 `provisional | verifying | passed | stability`；若已 `failed`，Task 必须还在 `judging`（待递补）。
 - Task 为 `closed` 时必须有 `Settlement.status === paid`。
-- 一个 Slot 至多一个非 `withdrawn` 的 Attempt。
+- 一个 Slot 至多一个非终态 Attempt。`failed` / `withdrawn` 释放席位，可以开下一次（`previousAttemptId`）。
+- `approval_required` 的席位必须先 `applied`，Owner 批准后才 `filled` 并创建 Attempt。`permissionless` 可直接 filled。
+- Task 为 `disputed` 时必须有 open Dispute 对象，且不能有 `Settlement.paid`。争议结束只能回 `judging` / `cancelled` / `rejected`。
+- Task 为 `expired` 时不能有 live Attempt。只有 `open` / `active` 可因截止过期；`settling` 不因原 deadline 过期。
+- Attempt 从 `stability` 到 `accepted` 必须有 `StabilityEvidence.outcome = pass`。
 
 ## 参与模式
 

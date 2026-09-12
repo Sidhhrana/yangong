@@ -28,3 +28,20 @@ export function splitAward(pool: number, split: AwardSplit = DEFAULT_SPLIT) {
   }
   return { base, qualityBonus, upstreamBonus, total: whole };
 }
+
+export function remainingPool(pool: number, awards: { total: number }[]) {
+  return awards.reduce((n, a) => n - a.total, pool);
+}
+
+export function cooperativeUnit(pool: number, maxSlots: number | "unlimited") {
+  const slots = maxSlots === "unlimited" ? 10 : maxSlots;
+  return Math.max(1, Math.round(pool / slots));
+}
+
+export function canIssueCooperativeAward(
+  pool: number,
+  awards: { total: number }[],
+  unit: number,
+) {
+  return remainingPool(pool, awards) >= unit;
+}

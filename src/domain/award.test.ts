@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { splitAward } from "./award.ts";
+import { canIssueCooperativeAward, cooperativeUnit, remainingPool, splitAward } from "./award.ts";
 
 test("voice demo pool 3000 still splits to 2000 + 500 + 500", () => {
   const a = splitAward(3000);
@@ -24,3 +24,21 @@ test("contract can override split", () => {
 test("split that does not sum to 1 is illegal", () => {
   assert.throws(() => splitAward(100, { base: 1, quality: 1, upstream: 0 }));
 });
+
+test("协作微奖：10 笔 ¥100 之后第 11 笔失败", () => {
+  const pool = 1000;
+  const unit = cooperativeUnit(pool, 10);
+  assert.equal(unit, 100);
+  const ten = Array.from({ length: 10 }, () => ({ total: unit }));
+  assert.equal(remainingPool(pool, ten), 0);
+  assert.equal(canIssueCooperativeAward(pool, ten, unit), false);
+  assert.equal(canIssueCooperativeAward(pool, ten.slice(0, 9), unit), true);
+});
+
+test("协作单笔不走 contest 拆账", () => {
+  const unit = cooperativeUnit(1000, 10);
+  assert.equal(unit, 100);
+  const contest = splitAward(1000);
+  assert.notEqual(contest.base, unit);
+});
+

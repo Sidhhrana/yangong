@@ -173,6 +173,8 @@ export interface Attempt {
   submissionId?: string;
   status: AttemptStatus;
   startedAt: string;
+  /** 同一席位上被替代的上一次。failed / withdrawn 之后才能开下一次。 */
+  previousAttemptId?: string;
 }
 
 export interface Submission {
@@ -308,6 +310,32 @@ export interface Settlement {
   proof?: string;
 }
 
+/** Bountysource 争议。Task.disputed 只是相位，证据在这里。 */
+export interface Dispute {
+  id: string;
+  taskId: string;
+  openedBy: string;
+  reason: string;
+  /** Submission.id 列表。Journal 一行字不算证据。 */
+  evidenceIds: string[];
+  status: "open" | "resolved";
+  openedAt: string;
+  resolvedAt?: string;
+  resolution?: "judging" | "cancelled" | "rejected";
+}
+
+/** 稳定期结束必须能回答这 7 天发生了什么。 */
+export interface StabilityEvidence {
+  id: string;
+  taskId: string;
+  attemptId: string;
+  period: string;
+  summary: string;
+  artifacts: string[];
+  outcome: "pass" | "fail";
+  recordedAt: string;
+}
+
 export interface JournalEvent {
   id: string;
   taskId: string;
@@ -334,6 +362,8 @@ export interface YangongState {
   verifications: Verification[];
   awards: Award[];
   settlements: Settlement[];
+  disputes: Dispute[];
+  stabilityEvidence: StabilityEvidence[];
   journal: JournalEvent[];
   session: { actorId: string; role: ActorRole };
 }

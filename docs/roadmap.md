@@ -35,13 +35,13 @@
 
 状态机和类型里已经有这些词。行为没有。要的是协议，不是按钮。
 
-- [ ] 争议期 Dispute。Bountysource 的核心，Task 有 `disputed`，没有对象、没有证据窗、没有「争议中不能付」
-- [ ] `approval_required` 真正审批。现在申领直接 `filled`，`Slot.applied` 是死枚举
-- [ ] 同一 Slot 下一次 Attempt。文档写「后续合同」，现场不会为修 barge-in 再占一席
-- [ ] 协作微奖记账。contest 一个 Winner 拆三份；cooperative 从池子里多次 Award，池子怎么耗尽
-- [ ] 稳定期要证据。现在是按钮。7 天里发生了什么必须能回答
-- [ ] design / video / article 验证库。`TaskType` 有这些字，套件是空的。Algora 的成果不只是 PR
-- [ ] 截止与过期。`Task.deadline` 是装饰，`expired` 是陷阱状态
+- [x] 争议期 Dispute。Bountysource 的核心，Task 有 `disputed`，没有对象、没有证据窗、没有「争议中不能付」
+- [x] `approval_required` 真正审批。现在申领直接 `filled`，`Slot.applied` 是死枚举
+- [x] 同一 Slot 下一次 Attempt。文档写「后续合同」，现场不会为修 barge-in 再占一席
+- [x] 协作微奖记账。contest 一个 Winner 拆三份；cooperative 从池子里多次 Award，池子怎么耗尽
+- [x] 稳定期要证据。现在是按钮。7 天里发生了什么必须能回答
+- [x] design / video / article 验证库。`TaskType` 有这些字，套件是空的。Algora 的成果不只是 PR
+- [x] 截止与过期。`Task.deadline` 是装饰，`expired` 是陷阱状态
 
 真沙箱、自动打款、登录、把控制台整包开源，都不在这一波。
 

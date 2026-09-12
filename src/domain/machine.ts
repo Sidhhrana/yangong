@@ -1,4 +1,4 @@
-import type { Attempt, AttemptStatus, Settlement, Slot, Task, TaskStatus } from "./types";
+import type { Attempt, AttemptStatus, Dispute, Settlement, Slot, Task, TaskStatus } from "./types";
 
 /**
  * Two machines.
@@ -53,6 +53,9 @@ const LIVE_ATTEMPT: AttemptStatus[] = [
 
 const POINTER_OK: AttemptStatus[] = ["provisional", "verifying", "passed", "stability"];
 
+/** failed / withdrawn 释放席位，同一 Slot 可以开下一次 Attempt。 */
+export const SLOT_RELEASED: AttemptStatus[] = ["failed", "withdrawn"];
+
 export function canGoTask(from: TaskStatus, to: TaskStatus) {
   return TASK_TRANSITIONS[from].includes(to);
 }
@@ -82,7 +85,7 @@ export function assertGoAttempt(from: AttemptStatus, to: AttemptStatus) {
 export function checkTaskAttemptConsistency(
   task: Task,
   attempts: Attempt[],
-  opts?: { slots?: Slot[]; settlements?: Settlement[] },
+  opts?: { slots?: Slot[]; settlements?: Settlement[]; disputes?: Dispute[] },
 ): { ok: boolean; violations: string[] } {
   const violations: string[] = [];
   const mine = attempts.filter((a) => a.taskId === task.id);
@@ -121,12 +124,34 @@ export function checkTaskAttemptConsistency(
     }
   }
 
+  if (task.status === "disputed") {
+    const paid = (opts?.settlements ?? []).filter((st) => st.status === "paid");
+    if (paid.length > 0) {
+      violations.push("Task disputed cannot have a paid Settlement");
+    }
+    const open = (opts?.disputes ?? []).filter((d) => d.taskId === task.id && d.status === "open");
+    if (open.length === 0) {
+      violations.push("Task disputed requires an open Dispute object");
+    }
+  }
+
+  if (task.status === "expired") {
+    const liveOnExpired = mine.filter((a) => LIVE_ATTEMPT.includes(a.status));
+    if (liveOnExpired.length > 0) {
+      violations.push("expired Task cannot have live Attempts");
+    }
+  }
+
   if (opts?.slots) {
     const slotIds = opts.slots.filter((sl) => sl.taskId === task.id).map((sl) => sl.id);
     for (const slotId of slotIds) {
-      const liveOnSlot = mine.filter((a) => a.slotId === slotId && a.status !== "withdrawn");
+      const slot = opts.slots.find((sl) => sl.id === slotId);
+      const liveOnSlot = mine.filter((a) => a.slotId === slotId && !SLOT_RELEASED.includes(a.status));
       if (liveOnSlot.length > 1) {
-        violations.push(`slot ${slotId} has ${liveOnSlot.length} non-withdrawn Attempts`);
+        violations.push(`slot ${slotId} has ${liveOnSlot.length} live Attempts`);
+      }
+      if (slot?.status === "applied" && liveOnSlot.length > 0) {
+        violations.push(`applied slot ${slotId} cannot have an Attempt`);
       }
     }
   }

@@ -252,9 +252,12 @@ export function createSeed(): YangongState {
     suites: [
       { id: "suite-reliability", key: "common/reliability-v2", name: "通用可靠性", category: "通用质量", version: "v2.0", summary: "启动、异常退出、超时、重试、资源泄漏。", caseCount: 5 },
       { id: "suite-streaming", key: "ai/streaming-v3", name: "流式模型", category: "AI Model", version: "v3.0", summary: "Streaming、Token Limit、Tool Calling、Provider Failure。", caseCount: 4 },
-      { id: "suite-voice", key: "voice/realtime-interruption-v1", name: "实时语音打断", category: "Voice", version: "v4.2", summary: "ASR / TTS / barge-in / 延迟 / 噪声，含真实事故回归。", caseCount: 9 },
+      { id: "suite-voice", key: "voice/realtime-interruption-v1", name: "实时语音打断", category: "Voice", version: "v4.2", summary: "ASR / TTS / barge-in / 延迟 / 噪声，含真实事故回归。", caseCount: 10 },
       { id: "suite-review", key: "review/architecture-rubric-v1", name: "架构评审量表", category: "评审", version: "v1.1", summary: "事实引用、覆盖率、矛盾、来源有效性。", caseCount: 4 },
-      { id: "suite-deploy", key: "deployment/field-v1", name: "现场实施", category: "Deployment", version: "v1.1", summary: "安装、升级、回滚、恢复、健康检查。", caseCount: 6 },
+      { id: "suite-deploy", key: "deployment/field-v1", name: "现场实施", category: "Deployment", version: "v1.1", summary: "安装、升级、回滚、恢复、健康检查。", caseCount: 7 },
+      { id: "suite-design", key: "design/interaction-states-v1", name: "交互稿状态", category: "设计", version: "v1.0", summary: "焦点、对比度、组件状态表。缺一项就是不可交付。", caseCount: 3 },
+      { id: "suite-video", key: "video/demo-screencast-v1", name: "演示录屏", category: "影像", version: "v1.0", summary: "合同路径必须出现，口播必须能听清，时长必须守约。", caseCount: 3 },
+      { id: "suite-article", key: "article/technical-memo-v1", name: "技术备忘", category: "文章", version: "v1.0", summary: "论断有引用，命令能跑，版本钉死。", caseCount: 3 },
     ],
     cases: [
       { id: "tc-rel-01", suiteId: "suite-reliability", code: "TC-REL-001", title: "冷启动成功", kind: "automated", required: true, description: "进程在 3s 内进入 ready。", origin: "authored" },
@@ -274,6 +277,7 @@ export function createSeed(): YangongState {
       { id: "tc-voice-17", suiteId: "suite-voice", code: "TC-VOICE-017", title: "Wi-Fi 闪断后 TTS 必须重连", kind: "regression", required: true, description: "断开 3 秒再恢复，TTS 不得永久卡死。", origin: "regression", originNote: "2026-08 现场：Wi-Fi 闪断 3s，TTS 永远无法重连。" },
       { id: "tc-voice-18", suiteId: "suite-voice", code: "TC-VOICE-018", title: "弱网下 barge-in < 200ms", kind: "regression", required: true, description: "在 200ms jitter 的弱网下，用户插话后 200ms 内必须停播。jitter 本身不算失败。停播超过 200ms、会话断开、或只把 jitter 当错误，均 FAIL。", origin: "regression", originNote: "预演：办公室 4G 热点 200ms jitter，插话后 TTS 又播了 1.4s。" },
       { id: "tc-voice-31", suiteId: "suite-voice", code: "TC-VOICE-031", title: "二次打断", kind: "regression", required: false, description: "连续两次 barge-in 不丢会话。", origin: "regression", originNote: "内部试跑发现。" },
+      { id: "tc-voice-19", suiteId: "suite-voice", code: "TC-VOICE-019", title: "稳定期内 TTS 不得再次卡死", kind: "regression", required: true, description: "稳定期证据必须包含：周期内每一次网络闪断后 TTS 在 3s 内恢复。反例：健康检查绿、但第 2 天 Wi-Fi 闪断后 TTS 永久卡死 → FAIL。只写「等了 7 天没事」→ FAIL。", origin: "regression", originNote: "现场：验收当天过了 TC-VOICE-017，稳定期第 2 天同一闪断再次卡死，按钮跳过稳定期把钱付了。" },
       { id: "tc-net-04", suiteId: "suite-voice", code: "TC-NET-004", title: "弱网抖动", kind: "automated", required: false, description: "200ms jitter 下不崩溃。", origin: "authored" },
       { id: "tc-rev-01", suiteId: "suite-review", code: "TC-REV-001", title: "事实引用检查", kind: "rubric", required: true, description: "关键论断必须指向可解析来源。", origin: "authored" },
       { id: "tc-rev-02", suiteId: "suite-review", code: "TC-REV-002", title: "覆盖率", kind: "rubric", required: true, description: "合同列出的子系统均被覆盖。", origin: "authored" },
@@ -285,6 +289,16 @@ export function createSeed(): YangongState {
       { id: "tc-dep-04", suiteId: "suite-deploy", code: "TC-DEP-004", title: "回滚演练", kind: "checklist", required: true, description: "一键回滚并恢复服务。", origin: "authored" },
       { id: "tc-dep-05", suiteId: "suite-deploy", code: "TC-DEP-005", title: "升级路径", kind: "checklist", required: false, description: "小版本升级不中断会话。", origin: "authored" },
       { id: "tc-dep-06", suiteId: "suite-deploy", code: "TC-DEP-006", title: "回滚后进行中的会话必须恢复", kind: "regression", required: true, description: "一键回滚之后，任何进行中的门禁会话必须在 30s 内恢复。只有进程起来或 /health 变绿不算通过。反例：回滚后 8s 内 /health 绿，但刷卡会话 token 全部失效 → FAIL。", origin: "regression", originNote: "现场预演：回滚后门禁服务很快 ready，进行中的刷卡会话全部掉线。" },
+      { id: "tc-dep-07", suiteId: "suite-deploy", code: "TC-DEP-007", title: "稳定期内刷卡会话必须存活", kind: "regression", required: true, description: "稳定期证据必须证明周期内进行中的刷卡会话没有静默掉线。/health 持续 200 不够。反例：72h health 全绿，第 11 小时起新刷卡成功、旧会话 token 全部 401 → FAIL。", origin: "regression", originNote: "现场：稳定期按钮跳过 72h，次日客户发现昨夜的长开门授权全部失效。" },
+      { id: "tc-des-01", suiteId: "suite-design", code: "TC-DES-001", title: "焦点态必须可见", kind: "checklist", required: true, description: "每个可点击控件要有 :focus-visible，不能只靠 hover。反例：自定义按钮只有 box-shadow on hover，键盘 Tab 过去看不出焦点 → FAIL。", origin: "regression", originNote: "设计评审：交付稿在 Figma 里用鼠标演示，无障碍验收时全键盘走不通。" },
+      { id: "tc-des-02", suiteId: "suite-design", code: "TC-DES-002", title: "正文对比度", kind: "checklist", required: true, description: "正文与背景对比度 ≥ 4.5:1（WCAG AA）。反例：#9aa3 字印在 #f4f0e6 上，对比度约 2.4 → FAIL。只写「看起来挺清爽」→ FAIL。", origin: "regression", originNote: "户外平板：阳光下一片灰，保安看不清开门按钮标签。" },
+      { id: "tc-des-03", suiteId: "suite-design", code: "TC-DES-003", title: "组件状态表", kind: "checklist", required: true, description: "每个组件必须画出 default / hover / disabled / loading / error。反例：只有一张 default 精美渲染，disabled 和 loading 交给开发「自己看着办」→ FAIL。", origin: "regression", originNote: "一次交付只有精美主态，开发在现场发明了一种转圈，把提交按钮转没了。" },
+      { id: "tc-vid-01", suiteId: "suite-video", code: "TC-VID-001", title: "合同路径必须出现", kind: "checklist", required: true, description: "录屏必须完整走过合同验收列出的关键路径。反例：10 分钟演示没走到 barge-in，只秀了欢迎语 → FAIL。", origin: "regression", originNote: "语音插件演示片从头到尾在说架构，合同要的打断一次都没有。" },
+      { id: "tc-vid-02", suiteId: "suite-video", code: "TC-VID-002", title: "口播可辨", kind: "checklist", required: true, description: "无字幕时口播必须能听清；有环境底噪必须加字幕。反例：咖啡厅底噪盖过讲解、又无字幕 → FAIL。", origin: "regression", originNote: "现场录的演示，评审回放时完全听不清验收口播。" },
+      { id: "tc-vid-03", suiteId: "suite-video", code: "TC-VID-003", title: "时长守约", kind: "checklist", required: true, description: "成片时长 ≤ 合同约定。反例：合同 ≤5 分钟，成片 18 分钟 → FAIL。", origin: "regression", originNote: "给客户的「五分钟看懂」变成十八分钟口播，采购没看完。" },
+      { id: "tc-art-01", suiteId: "suite-article", code: "TC-ART-001", title: "论断有引用", kind: "rubric", required: true, description: "关键论断必须指向可解析来源。反例：「业界都这么做」无链接、无论文、无 commit → FAIL。", origin: "regression", originNote: "一篇架构备忘用「大家都知道」带过控制环采样率选择。" },
+      { id: "tc-art-02", suiteId: "suite-article", code: "TC-ART-002", title: "命令能跑", kind: "checklist", required: true, description: "文中给出的命令必须在仓库里存在且可运行。反例：README 写 npm run harvest，package.json 没有这个脚本 → FAIL。", origin: "regression", originNote: "新人按备忘敲命令，脚本根本不在仓库里。" },
+      { id: "tc-art-03", suiteId: "suite-article", code: "TC-ART-003", title: "版本钉死", kind: "checklist", required: true, description: "依赖和上游文档必须钉 commit / tag / 日期，禁止 latest。反例：`npm i foo@latest` 或文档链到 master → FAIL。", origin: "regression", originNote: "三个月后 latest 升了大版本，备忘里的 API 全部 404。" },
     ],
     specs: [
       {
@@ -339,6 +353,8 @@ export function createSeed(): YangongState {
     verifications: [],
     awards: [],
     settlements: [],
+    disputes: [],
+    stabilityEvidence: [],
     journal: [
       { id: "j1", taskId: VOICE_TASK, at: "2026-09-01T09:00:00+08:00", kind: "publish", text: "合同发布。模式 contest · 3 席 · 需审批。环境 voice-runtime-v3.2。" },
       { id: "j2", taskId: VOICE_TASK, at: "2026-09-02T16:05:00+08:00", kind: "slots", text: "三席已满：Alice / Bob / Carol。Task = active。" },
@@ -373,7 +389,7 @@ export const VOICE_CASE_SCRIPT: Record<
 };
 
 /** 合同 suiteIds 覆盖的用例库存。未在 CASE_SCRIPT 列出的视为 pass。 */
-export const VOICE_CASE_TOTAL = 18;
+export const VOICE_CASE_TOTAL = 19;
 
 const VOICE_METRICS: Record<string, { p50Ms: number; p95Ms: number; interruptPct: number; memoryMb: number }> = {
   "sub-a": { p50Ms: 610, p95Ms: 920, interruptPct: 98, memoryMb: 620 },
