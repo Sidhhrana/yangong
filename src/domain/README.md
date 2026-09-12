@@ -12,6 +12,7 @@ GitHub 和支付宝在 `src/connectors/`。改连接器不要改 `machine.ts`。
 - `expire.ts` 只有 open/active 可过期
 - `stability.ts` 稳定期证据才能 accepted
 - `slot.ts` approval_required → applied
+- `claim.ts` 口令认领；钱包不是认领
 - `copy.ts` 中文标签
 - `copy.ts` 中文标签
 

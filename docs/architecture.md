@@ -27,6 +27,8 @@ GitHub 映射见 [ADR 0001](adr/0001-github-connector.md)：Issue URL → `sourc
 
 支付宝映射见 [ADR 0002](adr/0002-alipay-settlement.md)：`Settlement.paid` 必须挂 16–32 位订单号。合 PR 不是打款。
 
+身份见 [ADR 0003](adr/0003-identity-rails.md)：GitHub handle 和支付宝账号是两根轨。认领是 `Claim` 对象，口令 `claiming slot`。贴 `0x` 不是认领。
+
 ## 地基四件套
 
 1. **TaskContract** 定义「我要什么」

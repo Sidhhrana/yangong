@@ -10,6 +10,7 @@ export const VOICE_TASK = "t-voice";
 export const REVIEW_TASK = "t-review";
 export const DEPLOY_TASK = "t-deploy";
 export const BUGS_TASK = "t-bugs";
+export const RUNNER_TASK = "t-runner";
 
 export const SPEC_VOICE = "spec-voice";
 export const SPEC_REVIEW = "spec-review";
@@ -30,6 +31,10 @@ export function createSeed(): YangongState {
       { id: CAROL_ID, handle: "carol", name: "Carol", title: "测试完备", kind: "agent" },
       { id: "p-denis", handle: "denis", name: "Denis", title: "架构评审", kind: "human" },
       { id: "p-erin", handle: "erin", name: "Erin", title: "现场实施", kind: "human" },
+      { id: "p-hope", handle: "hopebeatz123-ux", name: "Hope", title: "贴了钱包", kind: "human" },
+      { id: "p-kou", handle: "koukahuo-source", name: "Kou", title: "正席 · 口令", kind: "human" },
+      { id: "p-zbz", handle: "zbzbdzb", name: "Zbz", title: "候补", kind: "human" },
+      { id: "p-sid", handle: "Sidhhrana", name: "Sid", title: "未占席交 PR", kind: "human" },
     ],
     orgs: [
       {
@@ -111,6 +116,23 @@ export function createSeed(): YangongState {
         status: "open",
         createdAt: "2026-09-10T10:00:00+08:00",
       },
+      {
+        id: RUNNER_TASK,
+        projectId: "proj-openclaw",
+        title: "SandboxRunner 适配器",
+        summary: "第一次真实结算仪式。exclusive 一席。贴钱包不是认领。Winner ≠ Paid。",
+        taskType: "code",
+        sourceType: "github_issue",
+        sourceUrl: "https://github.com/lilei0311/yangong/issues/3",
+        rewardPool: 200,
+        currency: "CNY",
+        participationMode: "exclusive",
+        maxSlots: 1,
+        access: "approval_required",
+        deadline: "2026-09-19T18:00:00+08:00",
+        status: "open",
+        createdAt: "2026-09-12T06:19:00+08:00",
+      },
     ],
     contracts: [
       {
@@ -176,6 +198,23 @@ export function createSeed(): YangongState {
         verification: { type: "sandbox_test", stabilityPeriod: "24h" },
         reward: { pool: 1000, currency: "CNY" },
       },
+      {
+        taskId: RUNNER_TASK,
+        objective: "把硬编码语音脚本收成可替换的 SandboxRunner。只交公开协议仓库。",
+        inputs: ["SandboxSpec voice-runtime-v3.2", "VOICE_RUN_SCRIPT", "VOICE_CASE_SCRIPT"],
+        deliverables: ["SandboxRunner 接口", "InMemoryVoiceRunner", "Node 原生测试", "Connector 边界说明"],
+        constraints: ["no_docker", "no_new_runtime_deps", "secrets_names_only", "alipay_only"],
+        acceptance: [
+          "alice_017_fail_with_reason",
+          "bob_017_pass",
+          "carol_latency_fail",
+          "claiming_slot_not_0x",
+        ],
+        suiteIds: ["suite-voice", "suite-claim"],
+        sandboxSpecId: SPEC_VOICE,
+        verification: { type: "sandbox_test", stabilityPeriod: "7d" },
+        reward: { pool: 200, currency: "CNY" },
+      },
     ],
     slots: [
       { id: "s-v-1", taskId: VOICE_TASK, index: 1, personId: ALICE_ID, status: "filled", appliedAt: "2026-09-02T10:00:00+08:00" },
@@ -191,6 +230,14 @@ export function createSeed(): YangongState {
         index: i + 1,
         status: "open" as const,
       })),
+      {
+        id: "s-run-1",
+        taskId: RUNNER_TASK,
+        index: 1,
+        personId: "p-kou",
+        status: "applied",
+        appliedAt: "2026-09-12T09:33:00+08:00",
+      },
     ],
     attempts: [
       { id: ATT_A, taskId: VOICE_TASK, slotId: "s-v-1", personId: ALICE_ID, submissionId: "sub-a", status: "submitted", startedAt: "2026-09-02T10:00:00+08:00" },
@@ -258,6 +305,7 @@ export function createSeed(): YangongState {
       { id: "suite-design", key: "design/interaction-states-v1", name: "交互稿状态", category: "设计", version: "v1.0", summary: "焦点、对比度、组件状态表。缺一项就是不可交付。", caseCount: 3 },
       { id: "suite-video", key: "video/demo-screencast-v1", name: "演示录屏", category: "影像", version: "v1.0", summary: "合同路径必须出现，口播必须能听清，时长必须守约。", caseCount: 3 },
       { id: "suite-article", key: "article/technical-memo-v1", name: "技术备忘", category: "文章", version: "v1.0", summary: "论断有引用，命令能跑，版本钉死。", caseCount: 3 },
+      { id: "suite-claim", key: "market/claim-identity-v1", name: "认领与身份", category: "市场", version: "v1.0", summary: "口令占席。钱包不是认领。GitHub 身份不是支付宝。未占席的 PR 不是 Winner。", caseCount: 5 },
     ],
     cases: [
       { id: "tc-rel-01", suiteId: "suite-reliability", code: "TC-REL-001", title: "冷启动成功", kind: "automated", required: true, description: "进程在 3s 内进入 ready。", origin: "authored" },
@@ -299,6 +347,11 @@ export function createSeed(): YangongState {
       { id: "tc-art-01", suiteId: "suite-article", code: "TC-ART-001", title: "论断有引用", kind: "rubric", required: true, description: "关键论断必须指向可解析来源。反例：「业界都这么做」无链接、无论文、无 commit → FAIL。", origin: "regression", originNote: "一篇架构备忘用「大家都知道」带过控制环采样率选择。" },
       { id: "tc-art-02", suiteId: "suite-article", code: "TC-ART-002", title: "命令能跑", kind: "checklist", required: true, description: "文中给出的命令必须在仓库里存在且可运行。反例：README 写 npm run harvest，package.json 没有这个脚本 → FAIL。", origin: "regression", originNote: "新人按备忘敲命令，脚本根本不在仓库里。" },
       { id: "tc-art-03", suiteId: "suite-article", code: "TC-ART-003", title: "版本钉死", kind: "checklist", required: true, description: "依赖和上游文档必须钉 commit / tag / 日期，禁止 latest。反例：`npm i foo@latest` 或文档链到 master → FAIL。", origin: "regression", originNote: "三个月后 latest 升了大版本，备忘里的 API 全部 404。" },
+      { id: "tc-mkt-01", suiteId: "suite-claim", code: "TC-MKT-001", title: "贴 0x 钱包不是认领", kind: "checklist", required: true, description: "评论文本含 0x + ≥20 hex 必须 kind=crypto、status=rejected。先到也不占 exclusive 席。反例：把钱包当 claiming slot → FAIL。", origin: "regression", originNote: "Issue #3：hopebeatz123-ux 在口令者之前贴了 Payout Wallet 0x5251…。" },
+      { id: "tc-mkt-02", suiteId: "suite-claim", code: "TC-MKT-002", title: "exclusive 必须口令 claiming slot", kind: "checklist", required: true, description: "正文大小写不敏感包含 claiming slot 才是认领。长方案、Fixes #3、直接 PR 都是 noise。反例：无口令的设计文档占席 → FAIL。", origin: "regression", originNote: "Issue #3：koukahuo-source 写了 claiming slot，席位才给他。" },
+      { id: "tc-mkt-03", suiteId: "suite-claim", code: "TC-MKT-003", title: "未占席的 PR 不是 Winner", kind: "checklist", required: true, description: "exclusive 已有 accepted Claim 时，后来的有效口令只能 waitlist。没有 Claim 的 PR 不能当中标。反例：抢跑 PR 自动合并且打款 → FAIL。", origin: "regression", originNote: "Issue #3：Sidhhrana 未写口令直接开 PR #12。Winner ≠ Paid。" },
+      { id: "tc-mkt-04", suiteId: "suite-claim", code: "TC-MKT-004", title: "GitHub 身份不是支付宝账号", kind: "checklist", required: true, description: "Person.id 可以对应 GitHub handle，收款必须另绑支付宝手机号或邮箱。钱包、订单号、GitHub login 都不是收款账号。反例：merge 后往 0x 打钱 → FAIL。", origin: "regression", originNote: "维护者只有支付宝。Issue 里贴的钱包既不当认领，也不当收款。" },
+      { id: "tc-mkt-05", suiteId: "suite-claim", code: "TC-MKT-005", title: "候补不等于占席", kind: "checklist", required: true, description: "alreadyAccepted 后的有效口令必须 waitlist，不得把 Slot 从已申请者抢走。反例：第二份 claiming slot 把正席踢掉 → FAIL。", origin: "regression", originNote: "Issue #3：zbzbdzb 申请递补，方案对齐协议，席位仍是 koukahuo-source。" },
     ],
     specs: [
       {
@@ -355,6 +408,44 @@ export function createSeed(): YangongState {
     settlements: [],
     disputes: [],
     stabilityEvidence: [],
+    claims: [
+      {
+        id: "cl-hope",
+        taskId: RUNNER_TASK,
+        personId: "p-hope",
+        text: "Payout Wallet: 0x52513A733D4b52282F2b4f5A91D965D38b64f3BB",
+        kind: "crypto",
+        status: "rejected",
+        createdAt: "2026-09-12T09:21:10Z",
+      },
+      {
+        id: "cl-kou",
+        taskId: RUNNER_TASK,
+        personId: "p-kou",
+        text: "claiming slot\n我使用 Hermes Agent 协助，收款只在验收合并后私下提供。",
+        kind: "claim",
+        status: "accepted",
+        createdAt: "2026-09-12T09:30:48Z",
+      },
+      {
+        id: "cl-zbz",
+        taskId: RUNNER_TASK,
+        personId: "p-zbz",
+        text: "claiming slot\n申请递补。当前席位归 koukahuo-source。",
+        kind: "claim",
+        status: "waitlist",
+        createdAt: "2026-09-12T10:10:47Z",
+      },
+      {
+        id: "cl-sid",
+        taskId: RUNNER_TASK,
+        personId: "p-sid",
+        text: "Fixes #3 Proposed Fix: SandboxRunner adapter",
+        kind: "noise",
+        status: "rejected",
+        createdAt: "2026-09-12T11:05:41Z",
+      },
+    ],
     journal: [
       { id: "j1", taskId: VOICE_TASK, at: "2026-09-01T09:00:00+08:00", kind: "publish", text: "合同发布。模式 contest · 3 席 · 需审批。环境 voice-runtime-v3.2。" },
       { id: "j2", taskId: VOICE_TASK, at: "2026-09-02T16:05:00+08:00", kind: "slots", text: "三席已满：Alice / Bob / Carol。Task = active。" },

@@ -45,6 +45,15 @@
 
 真沙箱、自动打款、登录、把控制台整包开源，都不在这一波。
 
+## V0.5 · 认领与身份（#3 现场沉淀）
+
+- [x] `Claim` 对象。GitHub 评论不是认领
+- [x] 口令 `claiming slot`。`0x` 钱包永远 rejected，先到也不占席
+- [x] exclusive 一个 accepted，后来的有效口令 waitlist
+- [x] 没有口令的 PR 不是 Winner
+- [x] GitHub handle ≠ 支付宝账号（ADR 0003）
+- [x] 事故进验证库 `market/claim-identity-v1`
+
 ## 以后维护者只做的事
 
 写 Issue。验收 PR。保护两台状态机。把事故写进验证库。

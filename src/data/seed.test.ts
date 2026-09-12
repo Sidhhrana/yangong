@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { classifyClaimText, exclusiveWinner } from "../domain/claim.ts";
 import { reconcile } from "../domain/run.ts";
 import {
   REVIEW_CASE_SCRIPT,
   REVIEW_RUN_SCRIPT,
+  RUNNER_TASK,
   VOICE_CASE_SCRIPT,
   VOICE_CASE_TOTAL,
   VOICE_RUN_SCRIPT,
@@ -69,3 +71,14 @@ test("design / video / article 套件各有 3 条 required，且描述含 FAIL �
   }
 });
 
+test("认领事故进了验证库，且 seed Claim 符合 exclusive 规则", () => {
+  const s = createSeed();
+  const rows = s.cases.filter((c) => c.suiteId === "suite-claim");
+  assert.equal(rows.length, 5);
+  assert.ok(rows.every((c) => c.required && /FAIL/.test(c.description)));
+  const mine = s.claims.filter((c) => c.taskId === RUNNER_TASK);
+  assert.equal(classifyClaimText(mine.find((c) => c.id === "cl-hope")!.text), "crypto");
+  assert.equal(exclusiveWinner(mine)?.personId, "p-kou");
+  assert.equal(mine.find((c) => c.personId === "p-zbz")?.status, "waitlist");
+  assert.equal(mine.find((c) => c.personId === "p-sid")?.status, "rejected");
+});

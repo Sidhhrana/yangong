@@ -6,6 +6,7 @@ import type {
   TaskStatus,
   TaskType,
 } from "./types";
+import type { ClaimKind, ClaimStatus } from "./claim";
 
 export const STATUS_LABEL: Record<TaskStatus, string> = {
   draft: "草稿",
@@ -89,6 +90,19 @@ export const CASE_KIND_LABEL: Record<CaseKind, string> = {
   checklist: "清单",
   benchmark: "基准",
   regression: "回归",
+};
+
+export const CLAIM_KIND_LABEL: Record<ClaimKind, string> = {
+  claim: "口令认领",
+  crypto: "链上钱包",
+  noise: "不是认领",
+};
+
+export const CLAIM_STATUS_LABEL: Record<ClaimStatus, string> = {
+  pending: "待处理",
+  accepted: "已占席",
+  waitlist: "候补",
+  rejected: "拒绝",
 };
 
 export const MAINLINE = [

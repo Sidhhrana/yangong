@@ -1,3 +1,5 @@
+import type { ClaimKind, ClaimStatus } from "./claim.ts";
+
 export const TASK_STATUSES = [
   "draft",
   "open",
@@ -336,6 +338,16 @@ export interface StabilityEvidence {
   recordedAt: string;
 }
 
+export interface Claim {
+  id: string;
+  taskId: string;
+  personId: string;
+  text: string;
+  kind: ClaimKind;
+  status: ClaimStatus;
+  createdAt: string;
+}
+
 export interface JournalEvent {
   id: string;
   taskId: string;
@@ -364,6 +376,7 @@ export interface YangongState {
   settlements: Settlement[];
   disputes: Dispute[];
   stabilityEvidence: StabilityEvidence[];
+  claims: Claim[];
   journal: JournalEvent[];
   session: { actorId: string; role: ActorRole };
 }
