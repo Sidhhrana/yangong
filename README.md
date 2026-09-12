@@ -35,10 +35,11 @@ SandboxRun 不能只说 47/50。必须能回答：TC-VOICE-017 期望什么、�
 
 ## 骨架里已经有什么
 
-- TypeScript 领域模型（`src/domain`）：Task / Attempt 两台状态机
-- SandboxSpec、TestCaseResult
+- TypeScript 领域模型（`src/domain`）：Task / Attempt 两台状态机 + 跨机器不变量
+- SandboxRun 聚合由 TestCaseResult 对账（`reconcile`）
 - 验证库种子（`src/data/seed.ts`）
-- Contract 式 Issue 模板（含 Verification Environment、Reward）
+- Contract 式 Issue 模板（套件 / 环境 / 报酬必填）
+- `npm test` / `npm run typecheck` / CI
 
 托管预览里可以走一遍：三席竞赛 → 相对评审 → 拟中标 → 同一 spec 下跑沙箱 → Alice 因 TC-VOICE-017 失败 → Bob 递补 → 稳定期 → Award / Settlement。
 

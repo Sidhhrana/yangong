@@ -5,7 +5,10 @@
 GitHub 和支付宝在 `src/connectors/`。改连接器不要改 `machine.ts`。
 
 - `types.ts` Task / Attempt / SandboxSpec / TestCaseResult 等
-- `machine.ts` 两台状态机：Task 是市场相位，Attempt 是候选人进度
+- `machine.ts` 两台状态机：Task 是市场相位，Attempt 是候选人进度。跨机器不变量走 `checkTaskAttemptConsistency`。
+- `run.ts` SandboxRun 聚合必须从 TestCaseResult 对账
+- `award.ts` 分账比例来自合同，默认 2/3 · 1/6 · 1/6
+- `copy.ts` 中文标签
 - `copy.ts` 中文标签
 
 改状态机必须同时改 `docs/state-machine.md`。

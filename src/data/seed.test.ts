@@ -1,0 +1,57 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { reconcile } from "../domain/run.ts";
+import {
+  REVIEW_CASE_SCRIPT,
+  REVIEW_RUN_SCRIPT,
+  VOICE_CASE_SCRIPT,
+  VOICE_CASE_TOTAL,
+  VOICE_RUN_SCRIPT,
+  createSeed,
+} from "./seed.ts";
+
+test("语音库存总数等于合同套件 caseCount 之和", () => {
+  const s = createSeed();
+  const contract = s.contracts.find((c) => c.taskId === "t-voice");
+  const total = s.suites
+    .filter((x) => contract?.suiteIds.includes(x.id))
+    .reduce((n, x) => n + x.caseCount, 0);
+  assert.equal(total, VOICE_CASE_TOTAL);
+  assert.equal(total, 18);
+});
+
+test("每个语音 SandboxRun 聚合等于 reconcile(明细)", () => {
+  for (const [id, rows] of Object.entries(VOICE_CASE_SCRIPT)) {
+    assert.deepEqual(
+      {
+        passed: VOICE_RUN_SCRIPT[id].passed,
+        total: VOICE_RUN_SCRIPT[id].total,
+        failedCaseIds: VOICE_RUN_SCRIPT[id].failedCaseIds,
+      },
+      reconcile(rows, VOICE_CASE_TOTAL),
+      id,
+    );
+  }
+});
+
+test("Alice 明细失败含 017，聚合不再丢 004", () => {
+  assert.ok(VOICE_RUN_SCRIPT["sub-a"].failedCaseIds.includes("tc-voice-17"));
+  assert.ok(VOICE_RUN_SCRIPT["sub-a"].failedCaseIds.includes("tc-voice-04"));
+  assert.equal(VOICE_RUN_SCRIPT["sub-a"].total, 18);
+  assert.equal(VOICE_RUN_SCRIPT["sub-a"].passed, 15);
+});
+
+test("Carol 不再假装 50/50：004 失败写进聚合", () => {
+  assert.deepEqual(VOICE_RUN_SCRIPT["sub-c"].failedCaseIds, ["tc-voice-04"]);
+  assert.equal(VOICE_RUN_SCRIPT["sub-c"].passed, 17);
+  assert.equal(VOICE_RUN_SCRIPT["sub-c"].total, 18);
+});
+
+test("评审脚本也对账", () => {
+  for (const [id, rows] of Object.entries(REVIEW_CASE_SCRIPT)) {
+    const agg = reconcile(rows);
+    assert.equal(REVIEW_RUN_SCRIPT[id].passed, agg.passed);
+    assert.equal(REVIEW_RUN_SCRIPT[id].total, agg.total);
+    assert.deepEqual(REVIEW_RUN_SCRIPT[id].failedCaseIds, agg.failedCaseIds);
+  }
+});

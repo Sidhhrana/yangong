@@ -11,5 +11,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: domain and connector tests
-        run: node --experimental-strip-types --test src/domain/*.test.ts src/connectors/*.test.ts
+      - run: npm install
+      - run: npm test
+      - run: npm run typecheck
+      - name: machine.ts changes must include state-machine.md
+        if: github.event_name == 'pull_request'
+        run: |
+          changed=$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD)
+          echo "$changed"
+          if echo "$changed" | grep -qx 'src/domain/machine.ts'; then
+            echo "$changed" | grep -qx 'docs/state-machine.md' || {
+              echo "changed src/domain/machine.ts without docs/state-machine.md"
+              exit 1
+            }
+          fi

@@ -1,4 +1,4 @@
-import type { AttemptStatus, TaskStatus } from "./types";
+import type { Attempt, AttemptStatus, Settlement, Slot, Task, TaskStatus } from "./types";
 
 /**
  * Two machines.
@@ -43,6 +43,16 @@ export const ATTEMPT_TRANSITIONS: Record<AttemptStatus, AttemptStatus[]> = {
   withdrawn: [],
 };
 
+const LIVE_ATTEMPT: AttemptStatus[] = [
+  "working",
+  "submitted",
+  "evaluating",
+  "verifying",
+  "stability",
+];
+
+const POINTER_OK: AttemptStatus[] = ["provisional", "verifying", "passed", "stability"];
+
 export function canGoTask(from: TaskStatus, to: TaskStatus) {
   return TASK_TRANSITIONS[from].includes(to);
 }
@@ -63,6 +73,65 @@ export function assertGoAttempt(from: AttemptStatus, to: AttemptStatus) {
     throw new Error(`Illegal attempt transition ${from} → ${to}`);
   }
   return to;
+}
+
+/**
+ * 跨机器不变量。单台迁移表管不了「三席同时不同步」这件事。
+ * 协作模式允许 Task 仍是 active 时已有 Attempt.accepted（微奖，任务继续开）。
+ */
+export function checkTaskAttemptConsistency(
+  task: Task,
+  attempts: Attempt[],
+  opts?: { slots?: Slot[]; settlements?: Settlement[] },
+): { ok: boolean; violations: string[] } {
+  const violations: string[] = [];
+  const mine = attempts.filter((a) => a.taskId === task.id);
+
+  const live = mine.filter((a) => LIVE_ATTEMPT.includes(a.status));
+  if (live.length > 0 && task.status !== "active" && task.status !== "judging") {
+    violations.push(
+      `live attempts ${live.map((a) => a.status).join(",")} require Task active|judging, got ${task.status}`,
+    );
+  }
+
+  if (task.status === "accepted") {
+    const winners = mine.filter((a) => a.status === "accepted");
+    if (winners.length !== 1) {
+      violations.push(`Task accepted requires exactly one accepted Attempt, got ${winners.length}`);
+    }
+  }
+
+  if (task.provisionalAttemptId) {
+    const att = mine.find((a) => a.id === task.provisionalAttemptId);
+    if (!att) {
+      violations.push(`provisionalAttemptId ${task.provisionalAttemptId} not on this Task`);
+    } else if (POINTER_OK.includes(att.status)) {
+      // ok
+    } else if (att.status === "failed" && task.status === "judging") {
+      // 待递补
+    } else {
+      violations.push(`provisionalAttemptId points at Attempt ${att.status}`);
+    }
+  }
+
+  if (task.status === "closed") {
+    const paid = (opts?.settlements ?? []).filter((st) => st.status === "paid");
+    if (paid.length === 0) {
+      violations.push("Task closed requires a paid Settlement");
+    }
+  }
+
+  if (opts?.slots) {
+    const slotIds = opts.slots.filter((sl) => sl.taskId === task.id).map((sl) => sl.id);
+    for (const slotId of slotIds) {
+      const liveOnSlot = mine.filter((a) => a.slotId === slotId && a.status !== "withdrawn");
+      if (liveOnSlot.length > 1) {
+        violations.push(`slot ${slotId} has ${liveOnSlot.length} non-withdrawn Attempts`);
+      }
+    }
+  }
+
+  return { ok: violations.length === 0, violations };
 }
 
 /** @deprecated Task-only alias. Prefer assertGoTask. */

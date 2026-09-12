@@ -147,7 +147,12 @@ export interface TaskContract {
     type: "sandbox_test" | "expert_review" | "runtime_stability" | "rubric";
     stabilityPeriod: string;
   };
-  reward: { pool: number; currency: "CNY" };
+  reward: {
+    pool: number;
+    currency: "CNY";
+    /** 比例，三项之和为 1。缺省用 DEFAULT_SPLIT。 */
+    split?: { base: number; quality: number; upstream: number };
+  };
 }
 
 export interface Slot {

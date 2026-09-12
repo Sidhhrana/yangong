@@ -48,6 +48,16 @@ CLAIMED → WORKING → SUBMITTED → EVALUATING
 
 V0.1：一个 Slot 一个 Attempt。同一席位多次重试是后续合同。
 
+## 跨机器不变量
+
+`checkTaskAttemptConsistency(task, attempts)` 把上面这些话变成代码。迁移表是两台孤立的机器；这个函数看它们的组合。
+
+- 有 Attempt 处于 `working | submitted | evaluating | verifying | stability` 时，Task 只能是 `active | judging`。
+- Task 为 `accepted` 时，必须恰好一个 Attempt 为 `accepted`。协作微奖可以在 Task 仍是 `active` 时已有 Attempt.accepted。
+- `provisionalAttemptId` 若有值，对应 Attempt 必须是 `provisional | verifying | passed | stability`；若已 `failed`，Task 必须还在 `judging`（待递补）。
+- Task 为 `closed` 时必须有 `Settlement.status === paid`。
+- 一个 Slot 至多一个非 `withdrawn` 的 Attempt。
+
 ## 参与模式
 
 `exclusive` | `contest` | `cooperative`

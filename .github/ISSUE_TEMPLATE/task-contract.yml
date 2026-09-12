@@ -37,20 +37,29 @@ body:
     id: suites
     attributes:
       label: Test suites to touch
-      description: Verification Library。怎么证明。
+      description: Verification Library 的 key。怎么证明。没有套件就不要用这份合同模板，先写草稿讨论。
       placeholder: "voice/realtime-interruption-v1"
-  - type: input
+    validations:
+      required: true
+  - type: dropdown
     id: sandbox
     attributes:
       label: Verification Environment
       description: SandboxSpec key。三个人必须在同一环境下测。
-      placeholder: "voice-runtime-v3.2"
+      options:
+        - voice-runtime-v3.2
+        - review-rubric-v1
+        - field-airgap-v1
+    validations:
+      required: true
   - type: input
     id: reward
     attributes:
       label: Reward
-      description: 真钱只打人民币、只走支付宝。不付 ETH/USDC/Stripe/PayPal/微信。Winner ≠ Paid。没钱就写 ¥0 OSS。
-      placeholder: "¥0 OSS contract · 或 ¥200 仅支付宝"
+      description: 人民币奖池。Winner ≠ Paid。贴 0x 钱包不占席，也不是收款账号。只支付宝。
+      placeholder: "¥0 OSS contract · or ¥3000 CNY contest · 仅支付宝"
+    validations:
+      required: true
   - type: dropdown
     id: slots
     attributes:
@@ -60,3 +69,5 @@ body:
         - contest (3)
         - cooperative
       default: 0
+    validations:
+      required: true

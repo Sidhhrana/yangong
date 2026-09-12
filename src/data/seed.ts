@@ -1,4 +1,5 @@
-import type { TestCaseResult, YangongState } from "@/domain/types";
+import type { TestCaseResult, YangongState } from "../domain/types.ts";
+import { reconcile } from "../domain/run.ts";
 
 export const OWNER_ID = "p-max";
 export const ALICE_ID = "p-alice";
@@ -348,47 +349,6 @@ export function createSeed(): YangongState {
 }
 
 /** Predetermined sandbox outcomes — fair compare, same spec, same suites. */
-export const VOICE_RUN_SCRIPT: Record<
-  string,
-  {
-    passed: number;
-    total: number;
-    p50Ms: number;
-    p95Ms: number;
-    interruptPct: number;
-    memoryMb: number;
-    failedCaseIds: string[];
-  }
-> = {
-  "sub-a": {
-    passed: 48,
-    total: 50,
-    p50Ms: 610,
-    p95Ms: 920,
-    interruptPct: 98,
-    memoryMb: 620,
-    failedCaseIds: ["tc-voice-17", "tc-voice-31"],
-  },
-  "sub-b": {
-    passed: 46,
-    total: 50,
-    p50Ms: 480,
-    p95Ms: 710,
-    interruptPct: 91,
-    memoryMb: 410,
-    failedCaseIds: ["tc-voice-05", "tc-voice-31", "tc-net-04", "tc-rel-04"],
-  },
-  "sub-c": {
-    passed: 50,
-    total: 50,
-    p50Ms: 820,
-    p95Ms: 1300,
-    interruptPct: 99,
-    memoryMb: 390,
-    failedCaseIds: [],
-  },
-};
-
 export const VOICE_CASE_SCRIPT: Record<
   string,
   Omit<TestCaseResult, "id" | "runId" | "attemptId">[]
@@ -411,6 +371,33 @@ export const VOICE_CASE_SCRIPT: Record<
     { caseId: "tc-voice-17", outcome: "pass", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "0.8s 重连", durationMs: 3800, artifacts: ["logs"] },
   ],
 };
+
+/** 合同 suiteIds 覆盖的用例库存。未在 CASE_SCRIPT 列出的视为 pass。 */
+export const VOICE_CASE_TOTAL = 18;
+
+const VOICE_METRICS: Record<string, { p50Ms: number; p95Ms: number; interruptPct: number; memoryMb: number }> = {
+  "sub-a": { p50Ms: 610, p95Ms: 920, interruptPct: 98, memoryMb: 620 },
+  "sub-b": { p50Ms: 480, p95Ms: 710, interruptPct: 91, memoryMb: 410 },
+  "sub-c": { p50Ms: 820, p95Ms: 1300, interruptPct: 99, memoryMb: 390 },
+};
+
+export const VOICE_RUN_SCRIPT: Record<
+  string,
+  {
+    passed: number;
+    total: number;
+    p50Ms: number;
+    p95Ms: number;
+    interruptPct: number;
+    memoryMb: number;
+    failedCaseIds: string[];
+  }
+> = Object.fromEntries(
+  Object.entries(VOICE_CASE_SCRIPT).map(([id, rows]) => [
+    id,
+    { ...VOICE_METRICS[id], ...reconcile(rows, VOICE_CASE_TOTAL) },
+  ]),
+);
 
 export const VOICE_EVAL_SCRIPT: Record<
   string,
