@@ -306,6 +306,7 @@ export function createSeed(): YangongState {
       { id: "suite-video", key: "video/demo-screencast-v1", name: "演示录屏", category: "影像", version: "v1.0", summary: "合同路径必须出现，口播必须能听清，时长必须守约。", caseCount: 3 },
       { id: "suite-article", key: "article/technical-memo-v1", name: "技术备忘", category: "文章", version: "v1.0", summary: "论断有引用，命令能跑，版本钉死。", caseCount: 3 },
       { id: "suite-claim", key: "market/claim-identity-v1", name: "认领与身份", category: "市场", version: "v1.0", summary: "口令占席。钱包不是认领。GitHub 身份不是支付宝。未占席的 PR 不是 Winner。", caseCount: 5 },
+      { id: "suite-eval", key: "market/evaluation-v1", name: "相对评审", category: "市场", version: "v1.0", summary: "排名从分数来。第 1 名也可以绝对失败。不能跳号拟中标。", caseCount: 4 },
     ],
     cases: [
       { id: "tc-rel-01", suiteId: "suite-reliability", code: "TC-REL-001", title: "冷启动成功", kind: "automated", required: true, description: "进程在 3s 内进入 ready。", origin: "authored" },
@@ -352,6 +353,10 @@ export function createSeed(): YangongState {
       { id: "tc-mkt-03", suiteId: "suite-claim", code: "TC-MKT-003", title: "未占席的 PR 不是 Winner", kind: "checklist", required: true, description: "exclusive 已有 accepted Claim 时，后来的有效口令只能 waitlist。没有 Claim 的 PR 不能当中标。反例：抢跑 PR 自动合并且打款 → FAIL。", origin: "regression", originNote: "Issue #3：Sidhhrana 未写口令直接开 PR #12。Winner ≠ Paid。" },
       { id: "tc-mkt-04", suiteId: "suite-claim", code: "TC-MKT-004", title: "GitHub 身份不是支付宝账号", kind: "checklist", required: true, description: "Person.id 可以对应 GitHub handle，收款必须另绑支付宝手机号或邮箱。钱包、订单号、GitHub login 都不是收款账号。反例：merge 后往 0x 打钱 → FAIL。", origin: "regression", originNote: "维护者只有支付宝。Issue 里贴的钱包既不当认领，也不当收款。" },
       { id: "tc-mkt-05", suiteId: "suite-claim", code: "TC-MKT-005", title: "候补不等于占席", kind: "checklist", required: true, description: "alreadyAccepted 后的有效口令必须 waitlist，不得把 Slot 从已申请者抢走。反例：第二份 claiming slot 把正席踢掉 → FAIL。", origin: "regression", originNote: "Issue #3：zbzbdzb 申请递补，方案对齐协议，席位仍是 koukahuo-source。" },
+      { id: "tc-eval-01", suiteId: "suite-eval", code: "TC-EVAL-001", title: "相对第 1 仍可绝对 FAIL", kind: "checklist", required: true, description: "Evaluation.rank=1 不能推出 Verification.pass。反例：Alice 91 分拟中标，TC-VOICE-017 失败后仍按排名发奖 → FAIL。", origin: "regression", originNote: "语音三席：相对最优的打断路径过不了闪断重连。" },
+      { id: "tc-eval-02", suiteId: "suite-eval", code: "TC-EVAL-002", title: "不能跳号拟中标", kind: "checklist", required: true, description: "仍 qualified 或 passed 的更高名次还在时，不能把第 3 名设为 provisional。反例：第 2 名还合格，Owner 点了第 3 名 → FAIL。", origin: "regression", originNote: "控制台曾按 evaluations[0] 提名，数组下标不是名次。" },
+      { id: "tc-eval-03", suiteId: "suite-eval", code: "TC-EVAL-003", title: "低于门槛取消资格", kind: "checklist", required: true, description: "score < 60 必须 disqualified，rank=0，不能进入拟中标候选。反例：52 分排第 3 然后被递补 → FAIL。", origin: "authored" },
+      { id: "tc-eval-04", suiteId: "suite-eval", code: "TC-EVAL-004", title: "同分先提交者靠前", kind: "checklist", required: true, description: "score 相同按 Submission.submittedAt 升序。反例：后交的同分被排第 1 → FAIL。", origin: "authored" },
     ],
     specs: [
       {
@@ -508,11 +513,10 @@ export const VOICE_RUN_SCRIPT: Record<
 
 export const VOICE_EVAL_SCRIPT: Record<
   string,
-  { score: number; rank: number; summary: string; dimensions: { name: string; score: number }[] }
+  { score: number; summary: string; dimensions: { name: string; score: number }[] }
 > = {
   "sub-a": {
     score: 91,
-    rank: 1,
     summary: "结构清晰，打断路径完整。相对最优，但尚未证明绝对合格。",
     dimensions: [
       { name: "架构", score: 94 },
@@ -523,7 +527,6 @@ export const VOICE_EVAL_SCRIPT: Record<
   },
   "sub-b": {
     score: 86,
-    rank: 2,
     summary: "延迟最好。打断略激进，可选用例有缺口。",
     dimensions: [
       { name: "架构", score: 84 },
@@ -534,7 +537,6 @@ export const VOICE_EVAL_SCRIPT: Record<
   },
   "sub-c": {
     score: 73,
-    rank: 3,
     summary: "测试全覆盖，但 P95 明显高于合同 800ms 阈值。",
     dimensions: [
       { name: "架构", score: 80 },
@@ -566,11 +568,10 @@ export const REVIEW_CASE_SCRIPT: Record<
 
 export const REVIEW_EVAL_SCRIPT: Record<
   string,
-  { score: number; rank: number; summary: string; dimensions: { name: string; score: number }[] }
+  { score: number; summary: string; dimensions: { name: string; score: number }[] }
 > = {
   "sub-denis": {
     score: 88,
-    rank: 1,
     summary: "风险清单可执行，来源已钉版本。相对最优，仍要过量表。不是语音沙箱。",
     dimensions: [
       { name: "引用", score: 90 },

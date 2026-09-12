@@ -71,6 +71,14 @@ test("design / video / article 套件各有 3 条 required，且描述含 FAIL �
   }
 });
 
+test("相对评审套件：第 1 名可 FAIL、不能跳号、门槛、同分", () => {
+  const s = createSeed();
+  const rows = s.cases.filter((c) => c.suiteId === "suite-eval");
+  assert.equal(rows.length, 4);
+  assert.ok(rows.every((c) => c.required && /FAIL/.test(c.description)));
+  assert.equal(s.suites.find((x) => x.id === "suite-eval")?.caseCount, 4);
+});
+
 test("认领事故进了验证库，且 seed Claim 符合 exclusive 规则", () => {
   const s = createSeed();
   const rows = s.cases.filter((c) => c.suiteId === "suite-claim");

@@ -54,6 +54,15 @@
 - [x] GitHub handle ≠ 支付宝账号（ADR 0003）
 - [x] 事故进验证库 `market/claim-identity-v1`
 
+## V0.6 · 相对评审是协议
+
+- [x] 名次从分数推导，同分先提交者靠前
+- [x] 低于门槛取消资格
+- [x] 拟中标必须是仍合格里的第 1，不能跳号
+- [x] 第 1 名绝对 FAIL 不改 Evaluation.rank
+- [x] 无人绝对合格则否决任务
+- [x] 事故进验证库 `market/evaluation-v1`
+
 ## 以后维护者只做的事
 
 写 Issue。验收 PR。保护两台状态机。把事故写进验证库。

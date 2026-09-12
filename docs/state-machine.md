@@ -38,7 +38,7 @@ CLAIMED → WORKING → SUBMITTED → EVALUATING
 
 | 状态 | 含义 |
 | --- | --- |
-| PROVISIONAL / 拟中标 | 相对最优，尚未绝对合格 |
+| PROVISIONAL / 拟中标 | 相对最优，尚未绝对合格。必须是仍合格里名次最好的，不能跳号。 |
 | VERIFYING | 按 TaskContract 引用的 SandboxSpec 跑 |
 | PASSED | 绝对验收合格 |
 | STABILITY | 稳定期。钱还不能付 |
@@ -61,6 +61,7 @@ V0.1：一个 Slot 一个 Attempt。同一席位多次重试是后续合同。
 - Task 为 `disputed` 时必须有 open Dispute 对象，且不能有 `Settlement.paid`。争议结束只能回 `judging` / `cancelled` / `rejected`。
 - Task 为 `expired` 时不能有 live Attempt。只有 `open` / `active` 可因截止过期；`settling` 不因原 deadline 过期。
 - Attempt 从 `stability` 到 `accepted` 必须有 `StabilityEvidence.outcome = pass`。
+- 拟中标必须是 `nextProvisionalId`：仍 `qualified` / `passed` 里 rank 最小的。第 1 名绝对失败不改 Evaluation.rank。
 
 ## 参与模式
 
