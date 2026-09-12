@@ -14,7 +14,7 @@
 ## V0.2 · 把控制台做成能发合同的市场
 
 - [x] voice / review / deploy 套件各 + 回归（TC-VOICE-018 / TC-REV-004 可判定 / TC-DEP-006）
-- [ ] SandboxRunner 适配器：吃 SandboxSpec，吐 SandboxRun + TestCaseResult[]（不接真容器）← 社区 #3
+- [x] SandboxRunner 适配器基准：吃 SandboxSpec，吐 SandboxRun + TestCaseResult[]（不接真容器）。悬赏 #3 仍开，超过基准再合。
 - [x] 任务创建表单（Owner 发合同）
 - [x] Award 从合同奖池出账
 - [x] 评审任务走量表，禁止复用语音脚本
@@ -53,6 +53,29 @@
 - [x] 没有口令的 PR 不是 Winner
 - [x] GitHub handle ≠ 支付宝账号（ADR 0003）
 - [x] 事故进验证库 `market/claim-identity-v1`
+
+## V0.6 · 相对评审是协议
+
+- [x] 名次从分数推导，同分先提交者靠前
+- [x] 低于门槛取消资格
+- [x] 拟中标必须是仍合格里的第 1，不能跳号
+- [x] 第 1 名绝对 FAIL 不改 Evaluation.rank
+- [x] 无人绝对合格则否决任务
+- [x] 事故进验证库 `market/evaluation-v1`
+
+## V0.7 · 运行时不再查演示脚本
+
+- [x] Evaluation 由专家记下维度分数，再锁定名次
+- [x] Verification 由已记录的 TestCaseResult 提交；没有记录就没有结果
+- [x] 语音三席是 seed 里的历史记录，不是点击后按 sub-a 查表
+- [x] 回归从真实失败沉淀，不再写死 TC-VOICE-042
+- [x] SandboxRunner 维护者基准在 main。#3 悬赏仍开。
+
+## V0.8 · 对账边界
+
+- [x] 重复 caseId 同结论算一次；冲突拒绝（#26）
+- [x] `P95 < 800ms` 严格小于，写在用例上，不是 verifySandboxRun（#28）
+- [x] 事故进验证库 `market/reconcile-v1`
 
 ## 以后维护者只做的事
 

@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { Submission, SandboxSpec } from "./types.ts";
+import { InMemoryVoiceRunner, VOICE_CASE_TOTAL, voiceRunner } from "./in-memory-voice.ts";
 import { assertGoAttempt, canGoTask } from "./machine.ts";
-import { InMemoryVoiceRunner } from "./inMemoryVoiceRunner.ts";
-import { verifySandboxRun, assertSecretNamesOnly } from "./sandbox.ts";
-import { SPEC_VOICE, VOICE_TASK, VOICE_RUN_SCRIPT, VOICE_CASE_TOTAL } from "../data/seed.ts";
+import { reconcile } from "./run.ts";
+import { assertSecretNamesOnly, isSandboxRunner, type SandboxRunner } from "./sandbox.ts";
+import type { SandboxSpec, Submission } from "./types.ts";
 
-const voiceSpec: SandboxSpec = {
-  id: SPEC_VOICE,
+const spec: SandboxSpec = {
+  id: "spec-voice",
   key: "voice-runtime-v3.2",
   name: "实时语音运行时",
   version: "v3.2",
@@ -20,145 +20,111 @@ const voiceSpec: SandboxSpec = {
   services: ["redis"],
   secretNames: ["DEEPSEEK_API_KEY"],
   fixtures: ["noisy-room.wav", "interrupt-test.wav", "wifi-blip-3s.pcap"],
-  summary: "三人同一镜像、同一夹具、无外网。半年后有人说「我当时过了」，用 spec + suite + commit 回答。",
+  summary: "三人同一镜像。",
 };
 
-const suiteIds = ["voice/realtime-interruption-v1"];
+const suiteIds = ["suite-reliability", "suite-streaming", "suite-voice"];
 
-function createSubmission(id: string, attemptId: string): Submission {
-  return {
-    id,
-    taskId: VOICE_TASK,
-    slotId: `slot-${id}`,
-    attemptId,
-    personId: `person-${id}`,
-    kind: "pull_request",
-    title: `Voice PR by ${id}`,
-    url: `https://github.com/example/yangong/pull/${id}`,
-    note: "submission",
-    submittedAt: "2026-09-10T08:00:00Z",
-  };
+function sub(id: string, attemptId: string): Pick<Submission, "id" | "taskId" | "attemptId"> {
+  return { id, taskId: "t-voice", attemptId };
 }
 
-test("Alice (sub-a): TC-VOICE-017 & TC-VOICE-031 fail, Verification FAILS", async () => {
-  const runner = new InMemoryVoiceRunner();
-  const sub = createSubmission("sub-a", "att-a");
-  const { run, results } = await runner.run(sub, voiceSpec, suiteIds);
+function runWith(runner: SandboxRunner, id: string, attemptId: string) {
+  return runner.run({
+    submission: sub(id, attemptId),
+    spec,
+    suiteIds,
+    catalogTotal: VOICE_CASE_TOTAL,
+    now: "2026-09-10T15:00:00+08:00",
+  });
+}
 
-  const script = VOICE_RUN_SCRIPT["sub-a"];
-  assert.equal(run.total, VOICE_CASE_TOTAL);
-  assert.equal(run.passed, script.passed);
-  assert.deepEqual(run.failedCaseIds, script.failedCaseIds);
-  assert.equal(run.specId, SPEC_VOICE);
+test("调用方只依赖接口，不依赖 InMemoryVoiceRunner 类名", () => {
+  assert.equal(isSandboxRunner(voiceRunner), true);
+  const runner: SandboxRunner = voiceRunner;
+  assert.equal(runner.key, "voice-runtime-v3.2");
+  assert.equal(runner.accepts(spec), true);
+  assert.equal(runner.accepts({ ...spec, key: "rubric-runner-v1" }), false);
+});
+
+test("Alice：017 卡死，004 也进聚合。库存 19，不是 48/50", () => {
+  const { run, results } = runWith(voiceRunner, "sub-a", "att-a");
+  const row = results.find((r) => r.caseId === "tc-voice-17");
+  assert.ok(row);
+  assert.equal(row.outcome, "fail");
+  assert.equal(row.expected, "Wi-Fi 断开 3s 后 TTS 在 3s 内重连");
+  assert.equal(row.actual, "TTS 永久卡死");
+  assert.equal(row.failureReason, "重连路径没有监听 network online");
+  assert.deepEqual(reconcile(results, VOICE_CASE_TOTAL), {
+    passed: run.passed,
+    total: run.total,
+    failedCaseIds: run.failedCaseIds,
+  });
+  assert.equal(run.total, 19);
+  assert.equal(run.passed, 16);
+  assert.ok(run.failedCaseIds.includes("tc-voice-17"));
+  assert.ok(run.failedCaseIds.includes("tc-voice-04"));
+  assert.ok(run.failedCaseIds.includes("tc-voice-31"));
+  assert.equal(run.specId, spec.id);
+  assert.equal(run.image, spec.image);
   assert.deepEqual(run.suiteIds, suiteIds);
-
-  // TestCaseResult expectations
-  const tc017 = results.find((r) => r.caseId === "tc-voice-17");
-  assert.ok(tc017, "tc-voice-17 result must exist");
-  assert.equal(tc017.outcome, "fail");
-  assert.equal(tc017.expected, "Wi-Fi 断开 3s 后 TTS 在 3s 内重连");
-  assert.equal(tc017.actual, "TTS 永久卡死");
-  assert.equal(tc017.failureReason, "重连路径没有监听 network online");
-
-  const tc031 = results.find((r) => r.caseId === "tc-voice-31");
-  assert.ok(tc031, "tc-voice-31 result must exist");
-  assert.equal(tc031.outcome, "fail");
-
-  // Top-level verification
-  const verification = verifySandboxRun(run, results, { maxP95Ms: 800 });
-  assert.equal(verification.outcome, "fail");
-  assert.match(verification.reason, /Test suite failed/);
+  assert.equal("taskStatus" in run, false);
 });
 
-test("Bob (sub-b): TC-VOICE-017 PASSES (1.1s reconnect), Verification FAILS on other cases", async () => {
-  const runner = new InMemoryVoiceRunner();
-  const sub = createSubmission("sub-b", "att-b");
-  const { run, results } = await runner.run(sub, voiceSpec, suiteIds);
-
-  const script = VOICE_RUN_SCRIPT["sub-b"];
-  assert.equal(run.total, VOICE_CASE_TOTAL);
-  assert.equal(run.passed, script.passed);
+test("Bob：017 在 1.1s 重连通过。失败在噪声 / barge-in / jitter / 重试", () => {
+  const { run, results } = runWith(voiceRunner, "sub-b", "att-b");
+  const row = results.find((r) => r.caseId === "tc-voice-17");
+  assert.ok(row);
+  assert.equal(row.outcome, "pass");
+  assert.equal(row.actual, "1.1s 重连");
   assert.equal(run.failedCaseIds.includes("tc-voice-17"), false);
-
-  const tc017 = results.find((r) => r.caseId === "tc-voice-17");
-  assert.ok(tc017, "tc-voice-17 result must exist");
-  assert.equal(tc017.outcome, "pass");
-  assert.equal(tc017.actual, "1.1s 重连");
-
-  const verification = verifySandboxRun(run, results, { maxP95Ms: 800 });
-  assert.equal(verification.outcome, "fail");
+  assert.ok(run.failedCaseIds.includes("tc-voice-05"));
+  assert.ok(run.failedCaseIds.includes("tc-voice-31"));
+  assert.ok(run.failedCaseIds.includes("tc-net-04"));
+  assert.ok(run.failedCaseIds.includes("tc-rel-04"));
+  assert.equal(run.total, 19);
+  assert.equal(run.passed, 15);
 });
 
-test("Carol (sub-c): unlisted test cases PASS, but Verification FAILS because P95 (1300ms) > 800ms", async () => {
-  const runner = new InMemoryVoiceRunner();
-  const sub = createSubmission("sub-c", "att-c");
-  const { run, results } = await runner.run(sub, voiceSpec, suiteIds);
-
-  const script = VOICE_RUN_SCRIPT["sub-c"];
-  assert.equal(run.total, VOICE_CASE_TOTAL);
-  assert.equal(run.passed, script.passed);
+test("Carol：004 是用例失败，不是 50/50 全绿再在 Verification 旁路判 P95", () => {
+  const { run, results } = runWith(voiceRunner, "sub-c", "att-c");
+  const row = results.find((r) => r.caseId === "tc-voice-04");
+  assert.ok(row);
+  assert.equal(row.outcome, "fail");
+  assert.equal(row.expected, "P95 < 800ms");
+  assert.equal(row.actual, "1300ms");
+  assert.equal(row.failureReason, "测试全绿但尾延迟超阈值。相对好看不够。");
+  assert.deepEqual(run.failedCaseIds, ["tc-voice-04"]);
+  assert.equal(run.total, 19);
+  assert.equal(run.passed, 18);
   assert.equal(run.p95Ms, 1300);
-
-  // Benchmark test case result is recorded with details
-  const tc004 = results.find((r) => r.caseId === "tc-voice-04");
-  assert.ok(tc004, "tc-voice-04 result must exist");
-  assert.equal(tc004.expected, "P95 < 800ms");
-  assert.equal(tc004.actual, "1300ms");
-  assert.equal(tc004.failureReason, "测试全绿但尾延迟超阈值。相对好看不够。");
-
-  // Overall Verification fails due to contractual SLA threshold P95 < 800ms
-  const verification = verifySandboxRun(run, results, { maxP95Ms: 800 });
-  assert.equal(verification.outcome, "fail");
-  assert.match(verification.reason, /P95 latency SLA breached: actual 1300ms/);
+  assert.notEqual(run.passed, run.total);
 });
 
-test("P95 严格不等式边界测试 (P95 < 800ms: 799ms PASS, 800ms FAIL, 801ms FAIL)", () => {
-  const baseRun: SandboxRun = {
-    id: "run-p95-boundary",
-    taskId: "t-voice",
-    attemptId: "att-p95",
-    submissionId: "sub-p95",
-    specId: "spec-voice",
-    image: "voice-runtime:v3.2",
-    status: "completed",
-    passed: 19,
-    total: 19,
-    failedCaseIds: [],
-    artifacts: ["metrics.json"],
-    startedAt: "2026-09-12T12:00:00Z",
-    finishedAt: "2026-09-12T12:05:00Z",
-  };
-  const dummyResults: TestCaseResult[] = [];
-
-  // 1. 799ms -> PASS (满足严格 < 800ms)
-  const ver799 = verifySandboxRun({ ...baseRun, p95Ms: 799 }, dummyResults, { maxP95Ms: 800 });
-  assert.equal(ver799.outcome, "pass");
-
-  // 2. 800ms -> FAIL (不满足严格 < 800ms)
-  const ver800 = verifySandboxRun({ ...baseRun, p95Ms: 800 }, dummyResults, { maxP95Ms: 800 });
-  assert.equal(ver800.outcome, "fail");
-  assert.match(ver800.reason, /P95 latency SLA breached/);
-
-  // 3. 801ms -> FAIL (不满足严格 < 800ms)
-  const ver801 = verifySandboxRun({ ...baseRun, p95Ms: 801 }, dummyResults, { maxP95Ms: 800 });
-  assert.equal(ver801.outcome, "fail");
-  assert.match(ver801.reason, /P95 latency SLA breached/);
+test("接整份 SandboxSpec；密钥只有名", () => {
+  assert.doesNotThrow(() => assertSecretNamesOnly(spec));
+  assert.throws(() => assertSecretNamesOnly({ ...spec, secretNames: ["DEEPSEEK_API_KEY=sk-live"] }));
+  assert.throws(() => assertSecretNamesOnly({ ...spec, secretNames: ["0xabc"] }));
+  const runner = new InMemoryVoiceRunner();
+  assert.throws(() =>
+    runner.run({
+      submission: sub("sub-a", "att-a"),
+      spec: { ...spec, key: "field-airgap-v1" },
+      suiteIds,
+    }),
+  );
+  assert.throws(() =>
+    runner.run({
+      submission: sub("sub-unknown", "att-x"),
+      spec,
+      suiteIds,
+    }),
+  );
 });
 
-test("Security & Contract: secrets only contain names, never values", () => {
-  assert.doesNotThrow(() => assertSecretNamesOnly(voiceSpec));
-
-  const leakingSpec: SandboxSpec = {
-    ...voiceSpec,
-    secretNames: ["DEEPSEEK_API_KEY=sk-1234567890abcdef"],
-  };
-  assert.throws(() => assertSecretNamesOnly(leakingSpec), /Security violation/);
-});
-
-test("State Machine Invariant: Attempt transitions verifying -> failed while Task stays judging", () => {
-  // Task remains judging
-  assert.equal(canGoTask("judging", "accepted"), true);
-
-  // Attempt can transition verifying -> failed
+test("Runner 不改状态机。verifying → failed 合法，Task 仍可以停在 judging", () => {
   assert.equal(assertGoAttempt("verifying", "failed"), "failed");
+  assert.equal(assertGoAttempt("verifying", "passed"), "passed");
+  assert.equal(canGoTask("judging", "accepted"), true);
+  assert.equal(canGoTask("judging", "closed"), false);
 });

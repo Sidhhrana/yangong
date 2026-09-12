@@ -1,5 +1,11 @@
 import type { TestCaseResult, YangongState } from "../domain/types.ts";
-import { reconcile } from "../domain/run.ts";
+import {
+  VOICE_CASE_SCRIPT,
+  VOICE_CASE_TOTAL,
+  VOICE_RUN_SCRIPT,
+} from "../domain/in-memory-voice.ts";
+
+export { VOICE_CASE_SCRIPT, VOICE_CASE_TOTAL, VOICE_RUN_SCRIPT };
 
 export const OWNER_ID = "p-max";
 export const ALICE_ID = "p-alice";
@@ -240,9 +246,9 @@ export function createSeed(): YangongState {
       },
     ],
     attempts: [
-      { id: ATT_A, taskId: VOICE_TASK, slotId: "s-v-1", personId: ALICE_ID, submissionId: "sub-a", status: "submitted", startedAt: "2026-09-02T10:00:00+08:00" },
-      { id: ATT_B, taskId: VOICE_TASK, slotId: "s-v-2", personId: BOB_ID, submissionId: "sub-b", status: "submitted", startedAt: "2026-09-02T11:20:00+08:00" },
-      { id: ATT_C, taskId: VOICE_TASK, slotId: "s-v-3", personId: CAROL_ID, submissionId: "sub-c", status: "submitted", startedAt: "2026-09-02T16:05:00+08:00" },
+      { id: ATT_A, taskId: VOICE_TASK, slotId: "s-v-1", personId: ALICE_ID, submissionId: "sub-a", status: "failed", startedAt: "2026-09-02T10:00:00+08:00" },
+      { id: ATT_B, taskId: VOICE_TASK, slotId: "s-v-2", personId: BOB_ID, submissionId: "sub-b", status: "passed", startedAt: "2026-09-02T11:20:00+08:00" },
+      { id: ATT_C, taskId: VOICE_TASK, slotId: "s-v-3", personId: CAROL_ID, submissionId: "sub-c", status: "failed", startedAt: "2026-09-02T16:05:00+08:00" },
       { id: ATT_DENIS, taskId: REVIEW_TASK, slotId: "s-r-1", personId: "p-denis", submissionId: "sub-denis", status: "submitted", startedAt: "2026-09-05T09:00:00+08:00" },
     ],
     submissions: [
@@ -295,7 +301,7 @@ export function createSeed(): YangongState {
         submittedAt: "2026-09-11T18:00:00+08:00",
       },
     ],
-    evaluations: [],
+    evaluations: voiceEvaluations(),
     suites: [
       { id: "suite-reliability", key: "common/reliability-v2", name: "通用可靠性", category: "通用质量", version: "v2.0", summary: "启动、异常退出、超时、重试、资源泄漏。", caseCount: 5 },
       { id: "suite-streaming", key: "ai/streaming-v3", name: "流式模型", category: "AI Model", version: "v3.0", summary: "Streaming、Token Limit、Tool Calling、Provider Failure。", caseCount: 4 },
@@ -306,6 +312,8 @@ export function createSeed(): YangongState {
       { id: "suite-video", key: "video/demo-screencast-v1", name: "演示录屏", category: "影像", version: "v1.0", summary: "合同路径必须出现，口播必须能听清，时长必须守约。", caseCount: 3 },
       { id: "suite-article", key: "article/technical-memo-v1", name: "技术备忘", category: "文章", version: "v1.0", summary: "论断有引用，命令能跑，版本钉死。", caseCount: 3 },
       { id: "suite-claim", key: "market/claim-identity-v1", name: "认领与身份", category: "市场", version: "v1.0", summary: "口令占席。钱包不是认领。GitHub 身份不是支付宝。未占席的 PR 不是 Winner。", caseCount: 5 },
+      { id: "suite-eval", key: "market/evaluation-v1", name: "相对评审", category: "市场", version: "v1.0", summary: "排名从分数来。第 1 名也可以绝对失败。不能跳号拟中标。", caseCount: 4 },
+      { id: "suite-run", key: "market/reconcile-v1", name: "对账与合同阈值", category: "市场", version: "v1.0", summary: "重复 caseId 不算两次。P95 写在用例上。800ms 不是过。", caseCount: 3 },
     ],
     cases: [
       { id: "tc-rel-01", suiteId: "suite-reliability", code: "TC-REL-001", title: "冷启动成功", kind: "automated", required: true, description: "进程在 3s 内进入 ready。", origin: "authored" },
@@ -320,7 +328,7 @@ export function createSeed(): YangongState {
       { id: "tc-voice-01", suiteId: "suite-voice", code: "TC-VOICE-001", title: "流式 ASR", kind: "automated", required: true, description: "部分结果在 300ms 内出现。", origin: "authored" },
       { id: "tc-voice-02", suiteId: "suite-voice", code: "TC-VOICE-002", title: "流式 TTS", kind: "automated", required: true, description: "首包音频 < 400ms。", origin: "authored" },
       { id: "tc-voice-03", suiteId: "suite-voice", code: "TC-VOICE-003", title: "Barge-in", kind: "benchmark", required: true, description: "用户插话后 200ms 内停播。", origin: "authored" },
-      { id: "tc-voice-04", suiteId: "suite-voice", code: "TC-VOICE-004", title: "P95 延迟 < 800ms", kind: "benchmark", required: true, description: "回合级 P95 必须低于合同阈值。", origin: "authored" },
+      { id: "tc-voice-04", suiteId: "suite-voice", code: "TC-VOICE-004", title: "P95 延迟 < 800ms", kind: "benchmark", required: true, description: "回合级 P95 必须严格低于 800ms。799 → PASS，800 → FAIL，801 → FAIL。合同写在 expected 上，不是 Verification 旁路。反例：p95Ms === 800 判过 → FAIL。反例：50/50 全绿再另开 SLA 层 → FAIL。", origin: "authored" },
       { id: "tc-voice-05", suiteId: "suite-voice", code: "TC-VOICE-005", title: "噪声鲁棒", kind: "automated", required: false, description: "SNR 10dB 下意图仍可解析。", origin: "authored" },
       { id: "tc-voice-17", suiteId: "suite-voice", code: "TC-VOICE-017", title: "Wi-Fi 闪断后 TTS 必须重连", kind: "regression", required: true, description: "断开 3 秒再恢复，TTS 不得永久卡死。", origin: "regression", originNote: "2026-08 现场：Wi-Fi 闪断 3s，TTS 永远无法重连。" },
       { id: "tc-voice-18", suiteId: "suite-voice", code: "TC-VOICE-018", title: "弱网下 barge-in < 200ms", kind: "regression", required: true, description: "在 200ms jitter 的弱网下，用户插话后 200ms 内必须停播。jitter 本身不算失败。停播超过 200ms、会话断开、或只把 jitter 当错误，均 FAIL。", origin: "regression", originNote: "预演：办公室 4G 热点 200ms jitter，插话后 TTS 又播了 1.4s。" },
@@ -352,6 +360,13 @@ export function createSeed(): YangongState {
       { id: "tc-mkt-03", suiteId: "suite-claim", code: "TC-MKT-003", title: "未占席的 PR 不是 Winner", kind: "checklist", required: true, description: "exclusive 已有 accepted Claim 时，后来的有效口令只能 waitlist。没有 Claim 的 PR 不能当中标。反例：抢跑 PR 自动合并且打款 → FAIL。", origin: "regression", originNote: "Issue #3：Sidhhrana 未写口令直接开 PR #12。Winner ≠ Paid。" },
       { id: "tc-mkt-04", suiteId: "suite-claim", code: "TC-MKT-004", title: "GitHub 身份不是支付宝账号", kind: "checklist", required: true, description: "Person.id 可以对应 GitHub handle，收款必须另绑支付宝手机号或邮箱。钱包、订单号、GitHub login 都不是收款账号。反例：merge 后往 0x 打钱 → FAIL。", origin: "regression", originNote: "维护者只有支付宝。Issue 里贴的钱包既不当认领，也不当收款。" },
       { id: "tc-mkt-05", suiteId: "suite-claim", code: "TC-MKT-005", title: "候补不等于占席", kind: "checklist", required: true, description: "alreadyAccepted 后的有效口令必须 waitlist，不得把 Slot 从已申请者抢走。反例：第二份 claiming slot 把正席踢掉 → FAIL。", origin: "regression", originNote: "Issue #3：zbzbdzb 申请递补，方案对齐协议，席位仍是 koukahuo-source。" },
+      { id: "tc-eval-01", suiteId: "suite-eval", code: "TC-EVAL-001", title: "相对第 1 仍可绝对 FAIL", kind: "checklist", required: true, description: "Evaluation.rank=1 不能推出 Verification.pass。反例：Alice 91 分拟中标，TC-VOICE-017 失败后仍按排名发奖 → FAIL。", origin: "regression", originNote: "语音三席：相对最优的打断路径过不了闪断重连。" },
+      { id: "tc-eval-02", suiteId: "suite-eval", code: "TC-EVAL-002", title: "不能跳号拟中标", kind: "checklist", required: true, description: "仍 qualified 或 passed 的更高名次还在时，不能把第 3 名设为 provisional。反例：第 2 名还合格，Owner 点了第 3 名 → FAIL。", origin: "regression", originNote: "控制台曾按 evaluations[0] 提名，数组下标不是名次。" },
+      { id: "tc-eval-03", suiteId: "suite-eval", code: "TC-EVAL-003", title: "低于门槛取消资格", kind: "checklist", required: true, description: "score < 60 必须 disqualified，rank=0，不能进入拟中标候选。反例：52 分排第 3 然后被递补 → FAIL。", origin: "authored" },
+      { id: "tc-eval-04", suiteId: "suite-eval", code: "TC-EVAL-004", title: "同分先提交者靠前", kind: "checklist", required: true, description: "score 相同按 Submission.submittedAt 升序。反例：后交的同分被排第 1 → FAIL。", origin: "authored" },
+      { id: "tc-run-01", suiteId: "suite-run", code: "TC-RUN-001", title: "重复 caseId 同结论算一次", kind: "checklist", required: true, description: "默认 total 按唯一 caseId。两次 fail a 不得变成 passed=1 total=2。反例：重复失败行凭空多一次通过 → FAIL。", origin: "regression", originNote: "Issue #26：reconcile 两行 fail a 得到 passed:1 total:2。" },
+      { id: "tc-run-02", suiteId: "suite-run", code: "TC-RUN-002", title: "同一 case 冲突结论必须拒绝", kind: "checklist", required: true, description: "同一 caseId 同时 fail 与 skip / pass 与 fail 必须扔。反例：当两个未通过用例扣，passed=0 → FAIL。", origin: "regression", originNote: "Issue #26：fail+skip 同一 id、显式 total=2 把冲突当成两例。" },
+      { id: "tc-run-03", suiteId: "suite-run", code: "TC-RUN-003", title: "P95 阈值在用例上，800 不是过", kind: "checklist", required: true, description: "expected `P95 < 800ms` 用严格小于。不要 verifySandboxRun 旁路。Carol 的 1300ms 是 TC-VOICE-004 失败，不是 50/50 全绿。反例：run.p95Ms > 800 才 fail，把 800 判过 → FAIL。", origin: "regression", originNote: "Issue #28 按 PR #12 的旁路 SLA 提的。协议不接受那一层。" },
     ],
     specs: [
       {
@@ -401,9 +416,9 @@ export function createSeed(): YangongState {
         summary: "实施任务的环境是现场，不是容器。仍然要版本化。",
       },
     ],
-    runs: [],
-    caseResults: [],
-    verifications: [],
+    runs: voiceRuns(),
+    caseResults: voiceCaseResults(),
+    verifications: voiceVerifications(),
     awards: [],
     settlements: [],
     disputes: [],
@@ -450,69 +465,19 @@ export function createSeed(): YangongState {
       { id: "j1", taskId: VOICE_TASK, at: "2026-09-01T09:00:00+08:00", kind: "publish", text: "合同发布。模式 contest · 3 席 · 需审批。环境 voice-runtime-v3.2。" },
       { id: "j2", taskId: VOICE_TASK, at: "2026-09-02T16:05:00+08:00", kind: "slots", text: "三席已满：Alice / Bob / Carol。Task = active。" },
       { id: "j3", taskId: VOICE_TASK, at: "2026-09-10T08:05:00+08:00", kind: "submit", text: "三份 Attempt 均 submitted。Task 进入 judging。各候选人进度不再写回 Task。" },
+      { id: "j3e", taskId: VOICE_TASK, at: "2026-09-10T12:00:00+08:00", kind: "evaluate", text: "相对评审完成。名次写在 Evaluation 上。Alice 第 1。" },
+      { id: "j3s", taskId: VOICE_TASK, at: "2026-09-10T15:00:00+08:00", kind: "sandbox", text: "同一 SandboxSpec 跑完。Alice / Carol 绝对失败。Bob 通过。名次不变。" },
       { id: "j4", taskId: REVIEW_TASK, at: "2026-09-11T18:00:00+08:00", kind: "submit", text: "Denis 提交评审备忘 URL。Task 仍是 active。量表还没跑。" },
     ],
   };
 }
 
-/** Predetermined sandbox outcomes — fair compare, same spec, same suites. */
-export const VOICE_CASE_SCRIPT: Record<
-  string,
-  Omit<TestCaseResult, "id" | "runId" | "attemptId">[]
-> = {
-  "sub-a": [
-    { caseId: "tc-voice-04", outcome: "fail", expected: "P95 < 800ms", actual: "920ms", durationMs: 48000, failureReason: "回合级尾延迟超合同阈值", artifacts: ["metrics.json"] },
-    { caseId: "tc-voice-17", outcome: "fail", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "TTS 永久卡死", durationMs: 14000, failureReason: "重连路径没有监听 network online", artifacts: ["logs", "audio", "wifi-blip-3s.pcap"] },
-    { caseId: "tc-voice-31", outcome: "fail", expected: "连续两次 barge-in 保持会话", actual: "第二次打断后 session = null", durationMs: 860, failureReason: "共享缓冲被第一次打断释放", artifacts: ["trace"] },
-  ],
-  "sub-b": [
-    { caseId: "tc-voice-04", outcome: "pass", expected: "P95 < 800ms", actual: "710ms", durationMs: 48000, artifacts: ["metrics.json"] },
-    { caseId: "tc-voice-17", outcome: "pass", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "1.1s 重连", durationMs: 4100, artifacts: ["logs"] },
-    { caseId: "tc-voice-05", outcome: "fail", expected: "SNR 10dB 意图可解析", actual: "意图置信 0.31", durationMs: 1200, failureReason: "噪声模型未启用", artifacts: ["audio"] },
-    { caseId: "tc-voice-31", outcome: "fail", expected: "连续两次 barge-in 保持会话", actual: "第二次打断丢 1 个 user turn", durationMs: 640, artifacts: ["trace"] },
-    { caseId: "tc-net-04", outcome: "fail", expected: "200ms jitter 不崩溃", actual: "jitter 缓冲溢出", durationMs: 2200, artifacts: ["logs"] },
-    { caseId: "tc-rel-04", outcome: "fail", expected: "瞬时失败最多重试 3 次", actual: "无限重试", durationMs: 9000, artifacts: ["logs"] },
-  ],
-  "sub-c": [
-    { caseId: "tc-voice-04", outcome: "fail", expected: "P95 < 800ms", actual: "1300ms", durationMs: 48000, failureReason: "测试全绿但尾延迟超阈值。相对好看不够。", artifacts: ["metrics.json"] },
-    { caseId: "tc-voice-17", outcome: "pass", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "0.8s 重连", durationMs: 3800, artifacts: ["logs"] },
-  ],
-};
-
-/** 合同 suiteIds 覆盖的用例库存。未在 CASE_SCRIPT 列出的视为 pass。 */
-export const VOICE_CASE_TOTAL = 19;
-
-const VOICE_METRICS: Record<string, { p50Ms: number; p95Ms: number; interruptPct: number; memoryMb: number }> = {
-  "sub-a": { p50Ms: 610, p95Ms: 920, interruptPct: 98, memoryMb: 620 },
-  "sub-b": { p50Ms: 480, p95Ms: 710, interruptPct: 91, memoryMb: 410 },
-  "sub-c": { p50Ms: 820, p95Ms: 1300, interruptPct: 99, memoryMb: 390 },
-};
-
-export const VOICE_RUN_SCRIPT: Record<
-  string,
-  {
-    passed: number;
-    total: number;
-    p50Ms: number;
-    p95Ms: number;
-    interruptPct: number;
-    memoryMb: number;
-    failedCaseIds: string[];
-  }
-> = Object.fromEntries(
-  Object.entries(VOICE_CASE_SCRIPT).map(([id, rows]) => [
-    id,
-    { ...VOICE_METRICS[id], ...reconcile(rows, VOICE_CASE_TOTAL) },
-  ]),
-);
-
 export const VOICE_EVAL_SCRIPT: Record<
   string,
-  { score: number; rank: number; summary: string; dimensions: { name: string; score: number }[] }
+  { score: number; summary: string; dimensions: { name: string; score: number }[] }
 > = {
   "sub-a": {
     score: 91,
-    rank: 1,
     summary: "结构清晰，打断路径完整。相对最优，但尚未证明绝对合格。",
     dimensions: [
       { name: "架构", score: 94 },
@@ -523,7 +488,6 @@ export const VOICE_EVAL_SCRIPT: Record<
   },
   "sub-b": {
     score: 86,
-    rank: 2,
     summary: "延迟最好。打断略激进，可选用例有缺口。",
     dimensions: [
       { name: "架构", score: 84 },
@@ -534,7 +498,6 @@ export const VOICE_EVAL_SCRIPT: Record<
   },
   "sub-c": {
     score: 73,
-    rank: 3,
     summary: "测试全覆盖，但 P95 明显高于合同 800ms 阈值。",
     dimensions: [
       { name: "架构", score: 80 },
@@ -566,11 +529,10 @@ export const REVIEW_CASE_SCRIPT: Record<
 
 export const REVIEW_EVAL_SCRIPT: Record<
   string,
-  { score: number; rank: number; summary: string; dimensions: { name: string; score: number }[] }
+  { score: number; summary: string; dimensions: { name: string; score: number }[] }
 > = {
   "sub-denis": {
     score: 88,
-    rank: 1,
     summary: "风险清单可执行，来源已钉版本。相对最优，仍要过量表。不是语音沙箱。",
     dimensions: [
       { name: "引用", score: 90 },
@@ -580,3 +542,96 @@ export const REVIEW_EVAL_SCRIPT: Record<
     ],
   },
 };
+
+function voiceEvaluations() {
+  const map = [
+    { attemptId: ATT_A, submissionId: "sub-a", rank: 1 },
+    { attemptId: ATT_B, submissionId: "sub-b", rank: 2 },
+    { attemptId: ATT_C, submissionId: "sub-c", rank: 3 },
+  ] as const;
+  return map.map((row) => {
+    const script = VOICE_EVAL_SCRIPT[row.submissionId];
+    return {
+      id: `ev-${row.submissionId}`,
+      taskId: VOICE_TASK,
+      attemptId: row.attemptId,
+      submissionId: row.submissionId,
+      score: script.score,
+      rank: row.rank,
+      method: "expert" as const,
+      summary: script.summary,
+      dimensions: script.dimensions,
+    };
+  });
+}
+
+function voiceRuns() {
+  return (["sub-a", "sub-b", "sub-c"] as const).map((subId) => {
+    const script = VOICE_RUN_SCRIPT[subId];
+    const attemptId = subId === "sub-a" ? ATT_A : subId === "sub-b" ? ATT_B : ATT_C;
+    return {
+      id: `run-${subId}`,
+      taskId: VOICE_TASK,
+      attemptId,
+      submissionId: subId,
+      specId: SPEC_VOICE,
+      suiteIds: ["suite-reliability", "suite-streaming", "suite-voice"],
+      image: "voice-runtime:v3.2",
+      status: "completed" as const,
+      passed: script.passed,
+      total: script.total,
+      p50Ms: script.p50Ms,
+      p95Ms: script.p95Ms,
+      interruptPct: script.interruptPct,
+      memoryMb: script.memoryMb,
+      failedCaseIds: [...script.failedCaseIds],
+      artifacts: ["logs", "audio", "trace", "metrics"],
+      startedAt: "2026-09-10T14:00:00+08:00",
+      finishedAt: "2026-09-10T15:00:00+08:00",
+    };
+  });
+}
+
+function voiceCaseResults() {
+  const att = { "sub-a": ATT_A, "sub-b": ATT_B, "sub-c": ATT_C } as const;
+  return Object.entries(VOICE_CASE_SCRIPT).flatMap(([subId, rows]) =>
+    rows.map((row, i) => ({
+      ...row,
+      id: `cr-${subId}-${i + 1}`,
+      runId: `run-${subId}`,
+      attemptId: att[subId as keyof typeof att],
+    })),
+  );
+}
+
+function voiceVerifications() {
+  return [
+    {
+      id: "vf-sub-a",
+      taskId: VOICE_TASK,
+      attemptId: ATT_A,
+      submissionId: "sub-a",
+      runId: "run-sub-a",
+      outcome: "fail" as const,
+      reason: "未通过绝对验收：TC-VOICE-004 / TC-VOICE-017",
+    },
+    {
+      id: "vf-sub-b",
+      taskId: VOICE_TASK,
+      attemptId: ATT_B,
+      submissionId: "sub-b",
+      runId: "run-sub-b",
+      outcome: "pass" as const,
+      reason: "绝对验收通过。环境 voice-runtime-v3.2。相对第 2 名。",
+    },
+    {
+      id: "vf-sub-c",
+      taskId: VOICE_TASK,
+      attemptId: ATT_C,
+      submissionId: "sub-c",
+      runId: "run-sub-c",
+      outcome: "fail" as const,
+      reason: "未通过绝对验收：TC-VOICE-004",
+    },
+  ];
+}

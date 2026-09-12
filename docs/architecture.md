@@ -57,9 +57,23 @@ Winner ≠ Paid
 拟中标失败 → 下一合格 Attempt 递补
 ```
 
-Evaluation 回答「谁更好」。Verification 回答「合不合格」。二者必须分开。
+Evaluation 回答「谁更好」。Verification 回答「合不合格」。二者必须分开。名次从分数推导，不是数组下标。第 1 名也可以绝对失败。运行时不按 submission id 查演示脚本。
 
 SandboxRun 不能只给 47/50。必须能回答：TC-VOICE-017 期望什么、实际什么、日志在哪。这是 TestCaseResult。
+
+## SandboxRunner
+
+SandboxRunner 是 Verification Infrastructure 的执行边界，**不是 Connector**。
+
+- 吃整份 `SandboxSpec` + Submission + suiteIds
+- 吐 `SandboxRun` + `TestCaseResult[]`
+- 聚合必须走 `reconcile`。未列出的用例视为通过，total 来自库存。重复 caseId 算一次，冲突结论拒绝。
+- P95 是 `TC-VOICE-004`，合同写在 expected：`P95 < 800ms`。800ms 不是过。不是 Verification 旁路。
+- 不改 Task，不写 Verification，不碰状态机
+- `secretNames` 只有名
+- 内存实现：`InMemoryVoiceRunner`（`voice-runtime-v3.2`）。换 Docker 只换 Runner
+
+GitHub / 支付宝 / 身份才是 Connector，见 ADR 0001–0003。
 
 ## 与 HAO OS 的关系
 

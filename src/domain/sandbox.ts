@@ -1,106 +1,50 @@
 /**
- * Verification Infrastructure - SandboxRunner and Verification Contracts.
+ * SandboxRunner 是 Verification Infrastructure 的执行边界。
+ * 不是 Connector。GitHub / 支付宝 / 身份才是 Connector。
  *
- * Reuses canonical domain types from ./types.ts.
+ * 吃 SandboxSpec + Submission + suiteIds。
+ * 吐 SandboxRun + TestCaseResult[]。
+ * 不改 Task，不写 Verification，不碰状态机。
  */
 
-import type {
-  Submission,
-  SandboxSpec,
-  SandboxRun,
-  TestCaseResult,
-  Verification,
-  VerificationOutcome,
-} from "./types.ts";
+import type { SandboxRun, SandboxSpec, Submission, TestCaseResult } from "./types.ts";
 
-export interface SandboxExecutionOutput {
-  run: SandboxRun;
-  results: TestCaseResult[];
-}
+export type SandboxJob = {
+  submission: Pick<Submission, "id" | "taskId" | "attemptId">;
+  spec: SandboxSpec;
+  suiteIds: string[];
+  catalogTotal?: number;
+  now?: string;
+};
 
-/**
- * Contract for any sandbox runner implementation.
- * Receives a submission, the versioned sandbox specification, and target suite IDs.
- * Produces a SandboxRun trace and detailed TestCaseResult items.
- */
+export type SandboxExecution = {
+  run: Omit<SandboxRun, "id">;
+  results: Omit<TestCaseResult, "id" | "runId">[];
+};
+
 export interface SandboxRunner {
-  run(
-    submission: Submission,
-    spec: SandboxSpec,
-    suiteIds: string[]
-  ): Promise<SandboxExecutionOutput>;
+  readonly key: string;
+  accepts(spec: SandboxSpec): boolean;
+  run(job: SandboxJob): SandboxExecution;
 }
 
-/**
- * Validates that secrets in a SandboxSpec contain names only, never secret values.
- * Fails fast if secret values or assignments (e.g. KEY=val) are detected.
- */
+const NAME = /^[A-Z][A-Z0-9_]{0,63}$/;
+
+/** secretNames 只有名。带 = / sk- / 0x 直接扔。 */
 export function assertSecretNamesOnly(spec: SandboxSpec): void {
-  if (!spec.secretNames) return;
   for (const name of spec.secretNames) {
-    if (typeof name !== "string" || name.trim() === "") {
-      throw new Error(`Invalid secret name in spec: ${String(name)}`);
-    }
-    if (name.includes("=") || name.includes(":") || name.includes("Bearer") || name.length > 100) {
-      throw new Error(
-        `Security violation: secretNames must only contain identifier names, never values. Detected: '${name}'`
-      );
+    if (!NAME.test(name)) {
+      throw new Error(`secretNames 只能是名字，不能是值：${name}`);
     }
   }
 }
 
-/**
- * Evaluates whether a SandboxRun meets acceptance criteria, producing a Verification record.
- *
- * Contract semantics:
- * - TestCase passing counts solely reflect unit/regression test outcomes.
- * - Benchmark SLA criteria (e.g. P95 < 800ms) are evaluated at the Verification level.
- *   If P95 threshold is breached, the overall Verification outcome is 'fail' even if
- *   all 50 test cases passed (e.g. Carol scenario: 50/50 passed, but Verification FAIL).
- */
-export function verifySandboxRun(
-  run: SandboxRun,
-  results: TestCaseResult[],
-  criteria: { maxP95Ms?: number; requiredCaseIds?: string[] } = {}
-): Verification {
-  const reasons: string[] = [];
-  let outcome: VerificationOutcome = "pass";
-
-  // 1. Check unit test cases
-  if (run.failedCaseIds.length > 0 || run.passed < run.total) {
-    outcome = "fail";
-    reasons.push(
-      `Test suite failed: ${run.total - run.passed}/${run.total} cases failed [${run.failedCaseIds.join(", ")}]`
-    );
-  }
-
-  // 2. Check required specific test cases if specified
-  if (criteria.requiredCaseIds) {
-    for (const reqId of criteria.requiredCaseIds) {
-      const res = results.find((r) => r.caseId === reqId);
-      if (!res || res.outcome !== "pass") {
-        outcome = "fail";
-        reasons.push(`Required case ${reqId} did not pass`);
-      }
-    }
-  }
-
-  // 3. Check Benchmark SLA threshold (contractual rule: P95 < maxP95Ms)
-  const maxP95 = criteria.maxP95Ms ?? 800;
-  if (run.p95Ms !== undefined && run.p95Ms >= maxP95) {
-    outcome = "fail";
-    reasons.push(
-      `P95 latency SLA breached: actual ${run.p95Ms}ms does not satisfy contract strict threshold P95 < ${maxP95}ms`
-    );
-  }
-
-  return {
-    id: `ver-${run.id}`,
-    taskId: run.taskId,
-    attemptId: run.attemptId,
-    submissionId: run.submissionId,
-    runId: run.id,
-    outcome,
-    reason: reasons.length > 0 ? reasons.join("; ") : "All test cases passed and latency SLA met",
-  };
+export function isSandboxRunner(value: unknown): value is SandboxRunner {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as SandboxRunner).key === "string" &&
+    typeof (value as SandboxRunner).accepts === "function" &&
+    typeof (value as SandboxRunner).run === "function"
+  );
 }
