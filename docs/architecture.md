@@ -64,3 +64,9 @@ SandboxRun 不能只给 47/50。必须能回答：TC-VOICE-017 期望什么、�
 ## 与 HAO OS 的关系
 
 [Human-AI Organization OS](https://github.com/lilei0311/human-ai-organization-os) 是组织控制平面（授权、预算、审计、Harness）。验工是它面向社区的第一个**工作市场场景**：把合同、验证、结算做成可共建的产品。HAO OS 目前仍是私有基线；验工仓库公开，供全社区提 PR。
+
+## Connectors
+
+Connector 层负责将 **Verification Infrastructure** 与外部执行环境解耦。核心接口包括 `SandboxRunner`，它接受 `Submission`、`SandboxSpec` 与待执行的 `suiteIds`，返回 `SandboxRun` 与 `TestCaseResult[]`。实现可以是基于 Docker/K8s 的真实容器，也可以是纯内存的模拟（如本仓库提供的 `InMemoryVoiceRunner`），只要遵循接口约定即可。
+
+这样，业务层无需感知运行时细节，能够自由替换实现而不影响领域模型。
