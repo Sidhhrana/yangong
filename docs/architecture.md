@@ -61,6 +61,20 @@ Evaluation 回答「谁更好」。Verification 回答「合不合格」。二�
 
 SandboxRun 不能只给 47/50。必须能回答：TC-VOICE-017 期望什么、实际什么、日志在哪。这是 TestCaseResult。
 
+## SandboxRunner
+
+SandboxRunner 是 Verification Infrastructure 的执行边界，**不是 Connector**。
+
+- 吃整份 `SandboxSpec` + Submission + suiteIds
+- 吐 `SandboxRun` + `TestCaseResult[]`
+- 聚合必须走 `reconcile`。未列出的用例视为通过，total 来自库存
+- P95 是 `TC-VOICE-004`，不是 Verification 旁路
+- 不改 Task，不写 Verification，不碰状态机
+- `secretNames` 只有名
+- 内存实现：`InMemoryVoiceRunner`（`voice-runtime-v3.2`）。换 Docker 只换 Runner
+
+GitHub / 支付宝 / 身份才是 Connector，见 ADR 0001–0003。
+
 ## 与 HAO OS 的关系
 
 [Human-AI Organization OS](https://github.com/lilei0311/human-ai-organization-os) 是组织控制平面（授权、预算、审计、Harness）。验工是它面向社区的第一个**工作市场场景**：把合同、验证、结算做成可共建的产品。HAO OS 目前仍是私有基线；验工仓库公开，供全社区提 PR。

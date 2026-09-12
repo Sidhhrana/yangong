@@ -14,7 +14,7 @@
 ## V0.2 · 把控制台做成能发合同的市场
 
 - [x] voice / review / deploy 套件各 + 回归（TC-VOICE-018 / TC-REV-004 可判定 / TC-DEP-006）
-- [ ] SandboxRunner 适配器：吃 SandboxSpec，吐 SandboxRun + TestCaseResult[]（不接真容器）← 社区 #3
+- [x] SandboxRunner 适配器基准：吃 SandboxSpec，吐 SandboxRun + TestCaseResult[]（不接真容器）。悬赏 #3 仍开，超过基准再合。
 - [x] 任务创建表单（Owner 发合同）
 - [x] Award 从合同奖池出账
 - [x] 评审任务走量表，禁止复用语音脚本
@@ -69,7 +69,7 @@
 - [x] Verification 由已记录的 TestCaseResult 提交；没有记录就没有结果
 - [x] 语音三席是 seed 里的历史记录，不是点击后按 sub-a 查表
 - [x] 回归从真实失败沉淀，不再写死 TC-VOICE-042
-- [ ] SandboxRunner 仍是 #3
+- [x] SandboxRunner 维护者基准在 main。#3 悬赏仍开。
 
 ## 以后维护者只做的事
 

@@ -1,5 +1,11 @@
 import type { TestCaseResult, YangongState } from "../domain/types.ts";
-import { reconcile } from "../domain/run.ts";
+import {
+  VOICE_CASE_SCRIPT,
+  VOICE_CASE_TOTAL,
+  VOICE_RUN_SCRIPT,
+} from "../domain/in-memory-voice.ts";
+
+export { VOICE_CASE_SCRIPT, VOICE_CASE_TOTAL, VOICE_RUN_SCRIPT };
 
 export const OWNER_ID = "p-max";
 export const ALICE_ID = "p-alice";
@@ -461,57 +467,6 @@ export function createSeed(): YangongState {
     ],
   };
 }
-
-/** Predetermined sandbox outcomes — fair compare, same spec, same suites. */
-export const VOICE_CASE_SCRIPT: Record<
-  string,
-  Omit<TestCaseResult, "id" | "runId" | "attemptId">[]
-> = {
-  "sub-a": [
-    { caseId: "tc-voice-04", outcome: "fail", expected: "P95 < 800ms", actual: "920ms", durationMs: 48000, failureReason: "回合级尾延迟超合同阈值", artifacts: ["metrics.json"] },
-    { caseId: "tc-voice-17", outcome: "fail", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "TTS 永久卡死", durationMs: 14000, failureReason: "重连路径没有监听 network online", artifacts: ["logs", "audio", "wifi-blip-3s.pcap"] },
-    { caseId: "tc-voice-31", outcome: "fail", expected: "连续两次 barge-in 保持会话", actual: "第二次打断后 session = null", durationMs: 860, failureReason: "共享缓冲被第一次打断释放", artifacts: ["trace"] },
-  ],
-  "sub-b": [
-    { caseId: "tc-voice-04", outcome: "pass", expected: "P95 < 800ms", actual: "710ms", durationMs: 48000, artifacts: ["metrics.json"] },
-    { caseId: "tc-voice-17", outcome: "pass", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "1.1s 重连", durationMs: 4100, artifacts: ["logs"] },
-    { caseId: "tc-voice-05", outcome: "fail", expected: "SNR 10dB 意图可解析", actual: "意图置信 0.31", durationMs: 1200, failureReason: "噪声模型未启用", artifacts: ["audio"] },
-    { caseId: "tc-voice-31", outcome: "fail", expected: "连续两次 barge-in 保持会话", actual: "第二次打断丢 1 个 user turn", durationMs: 640, artifacts: ["trace"] },
-    { caseId: "tc-net-04", outcome: "fail", expected: "200ms jitter 不崩溃", actual: "jitter 缓冲溢出", durationMs: 2200, artifacts: ["logs"] },
-    { caseId: "tc-rel-04", outcome: "fail", expected: "瞬时失败最多重试 3 次", actual: "无限重试", durationMs: 9000, artifacts: ["logs"] },
-  ],
-  "sub-c": [
-    { caseId: "tc-voice-04", outcome: "fail", expected: "P95 < 800ms", actual: "1300ms", durationMs: 48000, failureReason: "测试全绿但尾延迟超阈值。相对好看不够。", artifacts: ["metrics.json"] },
-    { caseId: "tc-voice-17", outcome: "pass", expected: "Wi-Fi 断开 3s 后 TTS 在 3s 内重连", actual: "0.8s 重连", durationMs: 3800, artifacts: ["logs"] },
-  ],
-};
-
-/** 合同 suiteIds 覆盖的用例库存。未在 CASE_SCRIPT 列出的视为 pass。 */
-export const VOICE_CASE_TOTAL = 19;
-
-const VOICE_METRICS: Record<string, { p50Ms: number; p95Ms: number; interruptPct: number; memoryMb: number }> = {
-  "sub-a": { p50Ms: 610, p95Ms: 920, interruptPct: 98, memoryMb: 620 },
-  "sub-b": { p50Ms: 480, p95Ms: 710, interruptPct: 91, memoryMb: 410 },
-  "sub-c": { p50Ms: 820, p95Ms: 1300, interruptPct: 99, memoryMb: 390 },
-};
-
-export const VOICE_RUN_SCRIPT: Record<
-  string,
-  {
-    passed: number;
-    total: number;
-    p50Ms: number;
-    p95Ms: number;
-    interruptPct: number;
-    memoryMb: number;
-    failedCaseIds: string[];
-  }
-> = Object.fromEntries(
-  Object.entries(VOICE_CASE_SCRIPT).map(([id, rows]) => [
-    id,
-    { ...VOICE_METRICS[id], ...reconcile(rows, VOICE_CASE_TOTAL) },
-  ]),
-);
 
 export const VOICE_EVAL_SCRIPT: Record<
   string,

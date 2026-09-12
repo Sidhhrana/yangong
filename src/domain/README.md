@@ -7,6 +7,8 @@ GitHub 和支付宝在 `src/connectors/`。改连接器不要改 `machine.ts`。
 - `types.ts` Task / Attempt / SandboxSpec / TestCaseResult 等
 - `machine.ts` 两台状态机：Task 是市场相位，Attempt 是候选人进度。跨机器不变量走 `checkTaskAttemptConsistency`。
 - `run.ts` SandboxRun 聚合必须从 TestCaseResult 对账
+- `sandbox.ts` SandboxRunner 接口。执行边界，不是 Connector。
+- `in-memory-voice.ts` 语音夹具实现。换实现只换这个文件。
 - `award.ts` 分账比例来自合同；协作微奖走 `canIssueCooperativeAward`
 - `dispute.ts` 争议中不能付
 - `expire.ts` 只有 open/active 可过期
